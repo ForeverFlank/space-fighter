@@ -5,6 +5,7 @@ import { SolarSystem } from "./solar-system.js";
 import { GameObjects } from "./game-objects.js";
 import { getScreenPos, getScreenSize, updateCamera } from "./camera.js";
 import { drawShipOsculatingOrbit } from "./trajectory-drawer.js";
+import { vecMul, vecSub } from "./math.js";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -181,14 +182,24 @@ function renderObjects(ctx) {
                 );
             }
         } else if (obj.type === "projectile") {
-            ctx.strokeStyle = "#f0f";
+            // if (obj.prevScreenPos === undefined) {
+            //     obj.prevScreenPos = screenPos;
+            // }
+            // const direction = vecSub(screenPos, obj.prevScreenPos);
+            // const startPos = vecSub(screenPos, vecMul(direction, 5));
+
+            ctx.strokeStyle = obj.color;
             ctx.beginPath();
+            // ctx.moveTo(...startPos);
+            // ctx.lineTo(...screenPos);
             ctx.arc(
                 screenPos[0],
                 screenPos[1],
                 2,
                 0, 2 * Math.PI);
             ctx.stroke();
+
+            // obj.prevScreenPos = screenPos;
         } else {
             const size = 8;
             ctx.strokeStyle = "#888";

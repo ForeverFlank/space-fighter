@@ -5,6 +5,7 @@ import { setupInput } from "./input.js";
 import { updateHUD } from "./hud.js";
 import { Game } from "./game.js";
 import { J2000 } from "./time.js";
+import { updateCamera } from "./camera.js";
 
 const startDate = new Date(Date.UTC(2063, 7, 25, 12, 0, 0))
 let time = (startDate.getTime() - J2000.getTime()) / 1000;
@@ -26,6 +27,7 @@ function start() {
         setTimeSpeed: (v) => timeSpeed = v
     });
     resizeCanvas();
+    updateCamera(time);
     requestAnimationFrame(loop);
 }
 

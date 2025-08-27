@@ -30,9 +30,11 @@ class Ship {
     } = {}) {
         this.type = "ship";
         this.team = team;
-        this.parentName = parentName;
+
         this.localPos = startLocalPos;
         this.localVel = startLocalVel;
+        this.parentName = parentName;
+
         this.dryMass = dryMass;
         this.propMass = propMass;
         this.thrust = thrust;
@@ -45,7 +47,6 @@ class Ship {
         this.projectileArmor = projectileArmor;
         this.laserArmor = laserArmor;
         this.nukeArmor = nukeArmor;
-
         this.maxProjectileArmor = maxProjectileArmor;
         this.maxLaserArmor = maxLaserArmor;
         this.maxNukeArmor = maxNukeArmor;
@@ -101,12 +102,15 @@ class Ship {
         const dirY = dy / dist;
 
         GameObjects.objects.push(new Projectile({
-            parentName: this.parentName,
             pos: [...this.pos],
             vel: [
                 this.vel[0] + dirX * launchSpeed,
                 this.vel[1] + dirY * launchSpeed
             ],
+            parentName: this.parentName,
+            mass: 0.05,
+            penetration: 1,
+            color: "#ff00ff",
             startTime: time,
             lifetime: 3600
         }));

@@ -11,6 +11,27 @@ function vecLengthSq(vec) {
     return vec[0] * vec[0] + vec[1] * vec[1];
 }
 
+function vecAdd(v1, v2) {
+    return [
+        v1[0] + v2[0],
+        v1[1] + v2[1]
+    ]
+}
+
+function vecSub(v1, v2) {
+    return [
+        v1[0] - v2[0],
+        v1[1] - v2[1]
+    ]
+}
+
+function vecMul(vec, scalar) {
+    return [
+        vec[0] * scalar,
+        vec[1] * scalar
+    ]
+}
+
 function vecFromPolar(r, angle) {
     return [
         r * Math.cos(angle),
@@ -57,4 +78,4 @@ function solveBisection(
     return m;
 }
 
-export { twoPi, deg2Rad, vecLength, vecLengthSq, vecFromPolar, vecRotate, solveBisection }
+export { twoPi, deg2Rad, vecLength, vecLengthSq, vecAdd, vecSub, vecMul, vecFromPolar, vecRotate, solveBisection }
