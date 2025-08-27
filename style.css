@@ -1,0 +1,80 @@
+* {
+    font-family: "Lekton", monospace;
+    font-weight: 400;
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
+    font-kerning: none;
+    color: white;
+}
+
+button {
+    background-color: black;
+    border: 1px solid white;
+    outline: none;
+    box-shadow: none;
+}
+
+button:hover {
+    background-color: #444;
+}
+
+.hud {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    pointer-events: none;
+}
+
+.pad {
+    display: flex;
+    justify-content: space-between;
+    margin: 1em;
+    pointer-events: none;
+}
+
+.hud-left {
+    display: flex;
+    flex-direction: column;
+    width: 15vw;
+    row-gap: 0.5em;
+    pointer-events: all;
+}
+
+.hud-left * {
+    background-color: #202020;
+    margin: 0;
+}
+
+.hud-right {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    right: 0;
+    width: 15vw;
+    row-gap: 0.5em;
+    pointer-events: all;
+}
+
+.hud-right * {
+    background-color: #202020;
+    margin: 0;
+}
+
+.dummy {
+    background-color: palevioletred;
+}
+
+.weapons {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 10px;
+    display: flex;
+    justify-content: center;
+    column-gap: 0.5em;
+}
+
+.weapons button {
+    width: 5em;
+    aspect-ratio: 1 / 1;
+}

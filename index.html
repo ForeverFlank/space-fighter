@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lekton:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="./style.css" rel="stylesheet">
+    <title>Document</title>
+</head>
+
+<body style="margin: 0; overflow: hidden; background-color: black;">
+    <canvas id="canvas" width="500" height="500" style="z-index: -10;"></canvas>
+    <div class="hud">
+        <div class="pad">
+            <div class="hud-left">
+                <p id="ship-health"></p>
+                <p id="ship-armor"></p>
+            </div>
+            <div class="hud-right"">
+                <p id="time"></p>
+                <p id="fps"></p>
+            </div>
+        </div>
+    </div>
+    <div class="weapons" id="weapons-menu">
+        <button data-weapon="cam">CAM</button>
+        <button data-weapon="mg">MG</button>
+        <button data-weapon="railgun">RAILGUN</button>
+        <button data-weapon="sniper">SNIPER</button>
+        <button data-weapon="laser">LASER</button>
+    </div>
+</body>
+<script type="module">
+    import { start } from "./scripts/main.js";
+    start();
+</script>
+
+</html>
