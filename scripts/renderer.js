@@ -3,9 +3,9 @@
 import { Orbit } from "./orbit.js";
 import { SolarSystem } from "./solar-system.js";
 import { GameObjects } from "./game-objects.js";
-import { getScreenPos, getScreenSize, updateCamera } from "./camera.js";
+import { getScreenPos, getScreenSize } from "./camera.js";
 import { drawShipOsculatingOrbit } from "./trajectory-drawer.js";
-import { vecAdd, vecRotate, vecSub } from "./math.js";
+import { vecAdd, vecRotate } from "./math.js";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -15,6 +15,36 @@ function resizeCanvas() {
     canvas.height = window.innerHeight;
 }
 window.addEventListener("resize", resizeCanvas);
+
+function brightenColor(color, brightness) {
+    let r = parseInt(color.substring(1, 3), 16);
+    let g = parseInt(color.substring(3, 5), 16);
+    let b = parseInt(color.substring(5, 7), 16);
+
+    r = parseInt(r * brightness);
+    g = parseInt(g * brightness);
+    b = parseInt(b * brightness);
+
+    r = (r < 255) ? r : 255;
+    g = (g < 255) ? g : 255;
+    b = (b < 255) ? b : 255;
+
+    r = Math.round(r);
+    g = Math.round(g);
+    b = Math.round(b);
+
+    let rNew = ((r.toString(16).length == 1)
+        ? "0" + r.toString(16)
+        : r.toString(16));
+    let gNew = ((g.toString(16).length == 1)
+        ? "0" + g.toString(16)
+        : g.toString(16));
+    let bNew = ((b.toString(16).length == 1)
+        ? "0" + b.toString(16)
+        : b.toString(16));
+
+    return "#" + rNew + gNew + bNew;
+}
 
 function renderScene(ctx, canvas, time) {
     ctx.fillStyle = "black";
@@ -129,44 +159,40 @@ function drawRotatedTriangle(ctx, screenPos, size, rot) {
 }
 
 function renderShipOrbits(ctx, time) {
-    for (const obj of GameObjects.objects) {
-        if (obj.type === "ship") {
-            const color = obj.team === "ally" ? "#0f0" : "#f00"
-            ctx.strokeStyle = color;
-            // computeShipTrajectory(obj, time);
-            // drawShipTrajectory(ctx, obj, time);
-            drawShipOsculatingOrbit(ctx, obj, time)
-        }
+    for (const ship of GameObjects.ships) {
+        const color = ship.team === "ally" ? "#0f0" : "#f00"
+        ctx.strokeStyle = color;
+        // computeShipTrajectory(ship, time);
+        // drawShipTrajectory(ctx, ship, time);
+        drawShipOsculatingOrbit(ctx, ship, time)
     }
 }
 
 function renderShips(ctx) {
-    for (const ship of GameObjects.objects) {
-        if (ship.type !== "ship") continue;
-
+    for (const ship of GameObjects.ships) {
         const screenPos = getScreenPos(ship.pos);
-        const color = ship.team === "ally" ? "#0f0" : "#f00"
-        ctx.strokeStyle = color;
+        const color = ship.team === "ally" ? "#00ff0" : "#ff0000"
 
         const size = Math.max(
             10, getScreenSize(ship.mapSize)
         );
 
         if (size > 10) {
-            for (const col of ship.colliders) {
-                // const rotatedOffset = [
-                //     col.pos[0] * Math.cos(ship.rot) - col.pos[1] * Math.sin(ship.rot),
-                //     col.pos[0] * Math.sin(ship.rot) + col.pos[1] * Math.cos(ship.rot)
-                // ];
+            for (const part of ship.parts) {
+                const healthFraction = part.health / part.maxHealth;
+                ctx.strokeStyle = brightenColor(
+                    color, 0.5 + 0.5 * healthFraction
+                );
+
                 const rotatedOffset = [0, 0];
-                vecRotate(rotatedOffset, col.pos, ship.rot);
+                vecRotate(rotatedOffset, part.pos, ship.rot);
 
                 const worldColPos = [0, 0];
                 vecAdd(worldColPos, ship.pos, rotatedOffset);
 
                 const colPos = getScreenPos(worldColPos);
-                const w = getScreenSize(col.size[0]);
-                const h = getScreenSize(col.size[1]);
+                const w = getScreenSize(part.size[0]);
+                const h = getScreenSize(part.size[1]);
 
                 ctx.save();
 
@@ -194,36 +220,27 @@ function renderShips(ctx) {
 }
 
 function renderProjectiles(ctx, time) {
-    for (const obj of GameObjects.objects) {
-        const screenPos = getScreenPos(obj.pos);
+    for (const proj of GameObjects.projectiles) {
+        const screenPos = getScreenPos(proj.pos);
 
-        if (obj.type === "projectile") {
-            // if (obj.prevScreenPos === undefined) {
-            //     obj.prevScreenPos = screenPos;
-            // }
-            // const direction = vecSub(screenPos, obj.prevScreenPos);
-            // const startPos = vecSub(screenPos, vecMul(direction, 5));
+        // if (proj.prevScreenPos === undefined) {
+        //     proj.prevScreenPos = screenPos;
+        // }
+        // const direction = vecSub(screenPos, proj.prevScreenPos);
+        // const startPos = vecSub(screenPos, vecMul(direction, 5));
 
-            ctx.strokeStyle = obj.color;
-            ctx.beginPath();
-            // ctx.moveTo(...startPos);
-            // ctx.lineTo(...screenPos);
-            ctx.arc(
-                screenPos[0],
-                screenPos[1],
-                2,
-                0, 2 * Math.PI);
-            ctx.stroke();
+        ctx.fillStyle = proj.color;
+        ctx.beginPath();
+        // ctx.moveTo(...startPos);
+        // ctx.lineTo(...screenPos);
+        ctx.arc(
+            screenPos[0],
+            screenPos[1],
+            2,
+            0, 2 * Math.PI);
+        ctx.fill();
 
-            // obj.prevScreenPos = screenPos;
-        } else if (obj.type !== "ship") {
-            const size = 8;
-            ctx.strokeStyle = "#888";
-            ctx.strokeRect(
-                screenPos[0] - size / 2,
-                screenPos[1] - size / 2,
-                size, size);
-        }
+        // proj.prevScreenPos = screenPos;
     }
 }
 

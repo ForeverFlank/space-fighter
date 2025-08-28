@@ -1,9 +1,5 @@
-"use strict"
+"use strict";
 
-import { getWorldPos } from "./camera.js";
-import { GameObjects } from "./game-objects.js";
-import { InputState } from "./input.js";
-import { Projectile } from "./projectile.js";
 import { SolarSystem } from "./solar-system.js";
 
 class Ship {
@@ -12,20 +8,16 @@ class Ship {
         parentName = null,
         startLocalPos = [0, 0],
         startLocalVel = [0, 0],
-        dryMass = 1000,
-        propMass = 0,
         thrust = 0,
         isp = 0,
         torque = 0,
-        health = 100,
-        maxHealth = 100,
         projectileArmor = 0,
         laserArmor = 0,
         nukeArmor = 0,
         maxProjectileArmor = 0,
         maxLaserArmor = 0,
         maxNukeArmor = 0,
-        colliders = [],
+        parts = [],
         weapons = [],
         mapSize = 100
     } = {}) {
@@ -36,14 +28,9 @@ class Ship {
         this.localVel = startLocalVel;
         this.parentName = parentName;
 
-        this.dryMass = dryMass;
-        this.propMass = propMass;
         this.thrust = thrust;
         this.isp = isp;
         this.torque = torque;
-
-        this.health = health;
-        this.maxHealth = maxHealth;
 
         this.projectileArmor = projectileArmor;
         this.laserArmor = laserArmor;
@@ -52,7 +39,7 @@ class Ship {
         this.maxLaserArmor = maxLaserArmor;
         this.maxNukeArmor = maxNukeArmor;
 
-        this.colliders = colliders;
+        this.parts = parts;
         this.weapons = weapons;
 
         this.mapSize = mapSize;
@@ -62,6 +49,21 @@ class Ship {
 
         this.rot = Math.PI / 2;
         this.angVel = 0
+
+        this.parts.forEach((part) => {
+            const area = part.size[0] * part.size[1];
+            part.mass = part.density * area;
+
+            part.maxHealth = part.healthPerArea * area;
+            part.health = part.maxHealth;
+
+            part.maxProjectileArmor = part.armorPerArea[0] * area;
+            part.maxLaserArmor = part.armorPerArea[1] * area;
+            part.maxNukeArmor = part.armorPerArea[2] * area;
+            part.projectileArmor = part.maxProjectileArmor;
+            part.laserArmor = part.maxLaserArmor;
+            part.nukeArmor = part.maxNukeArmor;
+        });
     }
 
     getParent() {
@@ -73,23 +75,51 @@ class Ship {
     }
 
     getMass() {
-        return this.dryMass + this.propMass;
+        let res = 0;
+        for (const part of this.parts) {
+            res += part.mass;
+        }
+        return res;
     }
 
     getInertia() {
         return 5000;
     }
 
+    getTotalHealth() {
+        let res = 0;
+        for (const part of this.parts) {
+            res += part.health;
+        }
+        return res;
+    }
+    
+    getMaxHealth() {
+        let res = 0;
+        for (const part of this.parts) {
+            res += part.maxHealth;
+        }
+        return res;
+    }
+
     getTotalArmor() {
-        return this.projectileArmor +
-            this.laserArmor +
-            this.nukeArmor;
+        let res = 0;
+        for (const part of this.parts) {
+            res += part.projectileArmor;
+            res += part.laserArmor;
+            res += part.nukeArmor;
+        }
+        return res;
     }
 
     getMaxArmor() {
-        return this.maxProjectileArmor +
-            this.maxLaserArmor +
-            this.maxNukeArmor;
+        let res = 0;
+        for (const part of this.parts) {
+            res += part.maxProjectileArmor;
+            res += part.maxLaserArmor;
+            res += part.maxNukeArmor;
+        }
+        return res;
     }
 
     fire(time, targetWorldPos) {

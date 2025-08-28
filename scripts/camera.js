@@ -68,15 +68,14 @@ canvas.addEventListener("mousedown", (e) => {
     let closest = null;
     let closestDist = Infinity;
 
-    for (const obj of GameObjects.objects) {
-        if (!obj.pos || obj.type !== "ship") continue;
-        const screenPos = getScreenPos(obj.pos);
+    for (const ship of GameObjects.ships) {
+        const screenPos = getScreenPos(ship.pos);
         const dx = screenPos[0] - mouseX;
         const dy = screenPos[1] - mouseY;
         const dist = vecLength([dx, dy]);
         if (dist < 20 && dist < closestDist) {
             closestDist = dist;
-            closest = { type: "ship", object: obj };
+            closest = { type: "ship", object: ship };
         }
     }
 

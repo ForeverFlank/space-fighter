@@ -169,7 +169,7 @@ class Orbit {
     }
 
     static getTrueAnomalyFromTime(orbit, mu, time) {
-        const { sma, e, mna, epoch, direction } = orbit;
+        const { sma, e, mna, epoch } = orbit;
 
         const dt = time - epoch;
 

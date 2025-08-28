@@ -15,7 +15,7 @@ export function updateHUD(time) {
 
     if (ship) {
         document.getElementById("ship-health").innerText = 
-            `Health: ${ship.health}/${ship.maxHealth}`;
+            `Health: ${ship.getTotalHealth()}/${ship.getMaxHealth()}`;
         document.getElementById("ship-armor").innerText = 
             `Armor: ${ship.getTotalArmor()}/${ship.getMaxArmor()}`;
     }

@@ -50,8 +50,9 @@ function vecFromPolar(out, r, angle) {
 function vecRotate(out, vec, angle) {
     const c = Math.cos(angle);
     const s = Math.sin(angle);
-    out[0] = vec[0] * c - vec[1] * s;
-    out[1] = vec[0] * s + vec[1] * c;
+    const x = vec[0], y = vec[1];
+    out[0] = x * c - y * s;
+    out[1] = x * s + y * c;
     return out;
 }
 

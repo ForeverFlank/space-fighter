@@ -6,7 +6,7 @@ import { GameObjects } from "./game-objects.js";
 import { InputState } from "./input.js";
 import { FocusTarget, getWorldPos, updateCamera } from "./camera.js";
 import { Planet } from "./planet.js";
-import { deg2Rad } from "./math.js";
+import { deg2Rad, vecLengthSq, vecSub } from "./math.js";
 import { Timewarp } from "./main.js";
 
 class Game {
@@ -110,6 +110,7 @@ class Game {
 
         updateCamera(time);
 
+        this.raycastProjectiles();
         this.updateShipFiring(time);
     }
 
@@ -121,6 +122,20 @@ class Game {
             Timewarp.index <= Timewarp.maxPhysicsTimewarpIndex) {
             const targetWorldPos = getWorldPos(InputState.mousePos);
             currShip.fire(time, targetWorldPos);
+        }
+    }
+
+    static raycastProjectiles() {
+        for (const proj of GameObjects.projectiles) {
+            for (const ship of GameObjects.ships) {
+                if (proj.team === ship.team) continue;
+
+                const dist = [0, 0];
+                vecSub(dist, proj.pos, ship.pos);
+                if (vecLengthSq(dist) < ship.mapSize * ship.mapSize) {
+                    proj.raycast(ship);
+                }
+            }
         }
     }
 }

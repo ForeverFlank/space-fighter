@@ -1,7 +1,7 @@
 "use strict";
 
 import { GameObjects } from "./game-objects.js";
-import { twoPi, vecAdd, vecSub, vecLength, vecMulAdd, vecRotate, vecMul, vecNormalize } from "./math.js";
+import { twoPi, vecAdd, vecSub, vecMulAdd, vecRotate, vecMul, vecNormalize } from "./math.js";
 import { Projectile } from "./projectile.js";
 import { Weapon } from "./weapon.js";
 
@@ -58,9 +58,10 @@ class ProjectileWeapon extends Weapon {
         projectile.pos = [...gunPos];
         projectile.vel = projVel;
         projectile.parentName = ship.parentName;
+        projectile.team = ship.team;
         projectile.startTime = time;
 
-        GameObjects.objects.push(new Projectile(projectile));
+        GameObjects.projectiles.push(new Projectile(projectile));
 
         const recoil = [0, 0];
         const massRatio = projectile.mass / ship.getMass();
