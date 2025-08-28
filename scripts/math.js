@@ -62,6 +62,10 @@ function vecMulAdd(out, a, b, scalar) {
     return out;
 }
 
+function vecDot(a, b) {
+    return a[0] * b[0] + a[1] * b[1];
+}
+
 function solveBisection(
     fn,
     left,
@@ -95,6 +99,6 @@ export {
     twoPi, deg2Rad,
     vecLength, vecLengthSq, vecNormalize,
     vecAdd, vecSub, vecMul, vecMulAdd,
-    vecFromPolar, vecRotate,
+    vecFromPolar, vecRotate, vecDot,
     solveBisection
 }

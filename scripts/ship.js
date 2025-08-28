@@ -1,5 +1,6 @@
 "use strict";
 
+import { vecDot, vecLengthSq, vecSub } from "./math.js";
 import { SolarSystem } from "./solar-system.js";
 
 class Ship {
@@ -60,9 +61,21 @@ class Ship {
             part.maxProjectileArmor = part.armorPerArea[0] * area;
             part.maxLaserArmor = part.armorPerArea[1] * area;
             part.maxNukeArmor = part.armorPerArea[2] * area;
+
             part.projectileArmor = part.maxProjectileArmor;
             part.laserArmor = part.maxLaserArmor;
             part.nukeArmor = part.maxNukeArmor;
+
+            part.projectileReduction = part.armorReduction[0];
+            part.laserReduction = part.armorReduction[1];
+            part.nukeReduction = part.armorReduction[2];
+
+            if (part.hitChance === undefined) {
+                part.hitChance = 1;
+            }
+            if (part.damageMultiplier === undefined) {
+                part.damageMultiplier = 1;
+            }
         });
     }
 
@@ -133,6 +146,27 @@ class Ship {
                 weapon.mount,
                 weapon.facing
             )
+        }
+    }
+
+    applyProjectileDamages(projecitle, hits) {
+        const relVel = [0, 0];
+        vecSub(relVel, projecitle.vel, this.vel);
+
+        const energy = 0.0005 * projecitle.mass * vecLengthSq(relVel);
+
+        for (const hit of hits) {
+            const part = hit.part;
+            if (Math.random() > part.hitChance) continue;
+
+            const damage = energy * Math.cos(hit.angle) * part.damageMultiplier;
+            // console.log(damage)
+            const applied = damage * (1 - part.projectileReduction);
+            part.projectileArmor -= damage - applied;
+            part.health -= applied;
+
+            if (part.projectileArmor < 0) part.projectileArmor = 0;
+            if (part.health < 0) part.health = 0;
         }
     }
 }

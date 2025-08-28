@@ -45,7 +45,8 @@ class GameObjects {
                     size: [20, 8],
                     density: 100,
                     healthPerArea: 100,
-                    armorPerArea: [10, 5, 1]
+                    armorPerArea: [10, 5, 1],
+                    armorReduction: [0.8, 0.7, 0.1]
                 },
                 {
                     part: "tank",
@@ -54,7 +55,8 @@ class GameObjects {
                     density: 100,
                     fuelDensity: 500,
                     healthPerArea: 100,
-                    armorPerArea: [10, 5, 1]
+                    armorPerArea: [10, 5, 1],
+                    armorReduction: [0.7, 0.7, 0.1]
                 },
                 {
                     part: "engine",
@@ -62,23 +64,113 @@ class GameObjects {
                     size: [8, 8],
                     density: 200,
                     healthPerArea: 50,
-                    armorPerArea: [5, 2, 0]
+                    armorPerArea: [5, 2, 0],
+                    armorReduction: [0.5, 0.3, 0]
                 },
                 {
                     part: "radiator",
                     pos: [-10, 14],
                     size: [8, 16],
+                    hitChance: 0.05,
+                    damageMultiplier: 0.2,
                     density: 10,
                     healthPerArea: 10,
-                    armorPerArea: [2, 1, 0]
+                    armorPerArea: [2, 1, 0],
+                    armorReduction: [0.2, 0.1, 0]
                 },
                 {
                     part: "radiator",
                     pos: [-10, -14],
                     size: [8, 16],
+                    hitChance: 0.05,
+                    damageMultiplier: 0.2,
                     density: 10,
                     healthPerArea: 10,
-                    armorPerArea: [2, 1, 0]
+                    armorPerArea: [2, 1, 0],
+                    armorReduction: [0.2, 0.1, 0]
+                }
+            ]
+        }),
+        new Ship({
+            team: "enemy",
+            parentName: "Moon",
+            startLocalPos: [6979000, 0],
+            startLocalVel: [0, 860],
+            thrust: 100000,
+            torque: 1000,
+            rot: 0,
+            angVel: 0,
+            mapSize: 100,
+            weapons: {
+                mg: {
+                    weapon: WeaponPresets.mg,
+                    mount: [0, 0],
+                    facing: 0,
+                    enabled: true
+                },
+                railgun: {
+                    weapon: WeaponPresets.railgun,
+                    mount: [0, 0],
+                    facing: 90 * deg2Rad,
+                    enabled: true
+                },
+                sniper: {
+                    weapon: WeaponPresets.railgun,
+                    mount: [0, 0],
+                    facing: -90 * deg2Rad,
+                    enabled: true
+                }
+            },
+            parts: [
+                {
+                    part: "hull",
+                    pos: [28, 0],
+                    size: [20, 8],
+                    density: 100,
+                    healthPerArea: 100,
+                    armorPerArea: [10, 5, 1],
+                    armorReduction: [0.8, 0.7, 0.1]
+                },
+                {
+                    part: "tank",
+                    pos: [0, 0],
+                    size: [36, 12],
+                    density: 100,
+                    fuelDensity: 500,
+                    healthPerArea: 100,
+                    armorPerArea: [10, 5, 1],
+                    armorReduction: [0.7, 0.7, 0.1]
+                },
+                {
+                    part: "engine",
+                    pos: [-22, 0],
+                    size: [8, 8],
+                    density: 200,
+                    healthPerArea: 50,
+                    armorPerArea: [5, 2, 0],
+                    armorReduction: [0.5, 0.3, 0]
+                },
+                {
+                    part: "radiator",
+                    pos: [-10, 14],
+                    size: [8, 16],
+                    hitChance: 0.05,
+                    damageMultiplier: 0.2,
+                    density: 10,
+                    healthPerArea: 10,
+                    armorPerArea: [2, 1, 0],
+                    armorReduction: [0.2, 0.1, 0]
+                },
+                {
+                    part: "radiator",
+                    pos: [-10, -14],
+                    size: [8, 16],
+                    hitChance: 0.05,
+                    damageMultiplier: 0.2,
+                    density: 10,
+                    healthPerArea: 10,
+                    armorPerArea: [2, 1, 0],
+                    armorReduction: [0.2, 0.1, 0]
                 }
             ]
         })

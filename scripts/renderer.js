@@ -5,7 +5,7 @@ import { SolarSystem } from "./solar-system.js";
 import { GameObjects } from "./game-objects.js";
 import { getScreenPos, getScreenSize } from "./camera.js";
 import { drawShipOsculatingOrbit } from "./trajectory-drawer.js";
-import { vecAdd, vecRotate } from "./math.js";
+import { vecAdd, vecRotate, vecSub } from "./math.js";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -171,7 +171,7 @@ function renderShipOrbits(ctx, time) {
 function renderShips(ctx) {
     for (const ship of GameObjects.ships) {
         const screenPos = getScreenPos(ship.pos);
-        const color = ship.team === "ally" ? "#00ff0" : "#ff0000"
+        const color = ship.team === "ally" ? "#00ff00" : "#ff0000";
 
         const size = Math.max(
             10, getScreenSize(ship.mapSize)
@@ -203,6 +203,7 @@ function renderShips(ctx) {
                 ctx.restore();
             }
         } else if (GameObjects.controllingObject == ship) {
+            ctx.strokeStyle = color;
             drawRotatedTriangle(
                 ctx,
                 screenPos,
@@ -210,6 +211,7 @@ function renderShips(ctx) {
                 ship.rot
             );
         } else {
+            ctx.strokeStyle = color;
             ctx.strokeRect(
                 screenPos[0] - size / 2,
                 screenPos[1] - size / 2,
@@ -223,24 +225,27 @@ function renderProjectiles(ctx, time) {
     for (const proj of GameObjects.projectiles) {
         const screenPos = getScreenPos(proj.pos);
 
-        // if (proj.prevScreenPos === undefined) {
-        //     proj.prevScreenPos = screenPos;
-        // }
-        // const direction = vecSub(screenPos, proj.prevScreenPos);
-        // const startPos = vecSub(screenPos, vecMul(direction, 5));
+        if (proj.prevScreenPos === undefined) {
+            proj.prevScreenPos = screenPos;
+        }
+        const direction = [0, 0], startPos = [0, 0];
+        vecSub(direction, screenPos, proj.prevScreenPos);
+        vecSub(startPos, screenPos, direction);
 
         ctx.fillStyle = proj.color;
+        ctx.strokeStyle = proj.color;
         ctx.beginPath();
-        // ctx.moveTo(...startPos);
-        // ctx.lineTo(...screenPos);
-        ctx.arc(
-            screenPos[0],
-            screenPos[1],
-            2,
-            0, 2 * Math.PI);
-        ctx.fill();
+        ctx.moveTo(...startPos);
+        ctx.lineTo(...screenPos);
+        ctx.stroke();
+        // ctx.arc(
+        //     screenPos[0],
+        //     screenPos[1],
+        //     2,
+        //     0, 2 * Math.PI);
+        // ctx.fill();
 
-        // proj.prevScreenPos = screenPos;
+        proj.prevScreenPos = screenPos;
     }
 }
 

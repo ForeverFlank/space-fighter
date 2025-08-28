@@ -1,6 +1,6 @@
 "use strict";
 
-import { vecLengthSq, vecRotate, vecSub } from "./math.js";
+import { twoPi, vecDot, vecLengthSq, vecNormalize, vecRotate, vecSub } from "./math.js";
 import { SolarSystem } from "./solar-system.js";
 
 class Projectile {
@@ -49,30 +49,36 @@ class Projectile {
         vecRotate(p0, p0, -ship.rot);
         vecRotate(p1, p1, -ship.rot);
 
+        const dir = [0, 0];
+        vecSub(dir, p1, p0);
+        vecNormalize(dir, dir);
+
         const hits = [];
         const m = (p1[1] - p0[1]) / (p1[0] - p0[0]);
 
-        for (const col of ship.colliders) {
+        for (const part of ship.parts) {
 
-            const left = col.pos[0] - col.size[0] / 2;
-            const right = col.pos[0] + col.size[0] / 2;
-            const top = col.pos[1] + col.size[1] / 2;
-            const bottom = col.pos[1] - col.size[1] / 2;
+            const left = part.pos[0] - part.size[0] / 2;
+            const right = part.pos[0] + part.size[0] / 2;
+            const top = part.pos[1] + part.size[1] / 2;
+            const bottom = part.pos[1] - part.size[1] / 2;
 
             if (p0[0] < p1[0]) {
                 const y = m * (left - p0[0]) + p0[1];
                 if (bottom <= y && y <= top) {
                     hits.push({
+                        part: part,
                         pos: [left, y],
-                        normal: [-1, 0]
+                        angle: Math.acos(vecDot(dir, [1, 0]))
                     })
                 }
             } else {
                 const y = m * (right - p0[0]) + p0[1];
                 if (bottom <= y && y <= top) {
                     hits.push({
+                        part: part,
                         pos: [right, y],
-                        normal: [1, 0]
+                        angle: Math.acos(vecDot(dir, [-1, 0]))
                     })
                 }
                 
@@ -81,16 +87,18 @@ class Projectile {
                 const x = (bottom - p0[1]) / m + p0[0];
                 if (left <= x && x <= right) {
                     hits.push({
+                        part: part,
                         pos: [x, bottom],
-                        normal: [0, -1]
+                        angle: Math.acos(vecDot(dir, [0, 1]))
                     })
                 }
             } else {
                 const x = (top - p0[1]) / m + p0[0];
                 if (left <= x && x <= right) {
                     hits.push({
+                        part: part,
                         pos: [x, top],
-                        normal: [0, 1]
+                        angle: Math.acos(vecDot(dir, [0, -1]))
                     })
                 }
             }
@@ -103,7 +111,7 @@ class Projectile {
             return vecLengthSq(d0) - vecLengthSq(d1);
         });
 
-        if (hits.length > 0) console.log(hits[0].pos)
+        ship.applyProjectileDamages(this, hits);
     }
 }
 
