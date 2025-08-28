@@ -15,7 +15,7 @@ button {
 }
 
 button:hover {
-    background-color: #444;
+    background-color: #333;
 }
 
 .hud {
@@ -77,4 +77,31 @@ button:hover {
 .weapons button {
     width: 5em;
     aspect-ratio: 1 / 1;
+}
+
+.toggle-btn {
+    --btn-color: white;
+    background: black;
+    color: var(--btn-color);
+    border: 1px solid var(--btn-color);
+    cursor: pointer;
+    transition: 100ms;
+}
+
+.toggle-btn.on {
+    background: var(--btn-color);
+    border-color: var(--btn-color);
+    mix-blend-mode: difference;
+}
+
+.toggle-btn:disabled {
+    background: #555;
+    color: #aaa;
+    border-color: #777;
+    cursor: not-allowed;
+}
+
+.blend-difference {
+    color: var(--btn-color);
+    mix-blend-mode: difference;
 }

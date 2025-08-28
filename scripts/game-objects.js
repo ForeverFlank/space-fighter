@@ -19,25 +19,52 @@ class GameObjects {
             torque: 1000,
             rot: 0,
             angVel: 0,
-            sas: false,
-            weapons: [
-                {
+            mapSize: 100,
+            weapons: {
+                mg: {
                     weapon: WeaponPresets.mg,
                     mount: [0, 0],
                     facing: 0,
                     enabled: true
                 },
-                {
+                railgun: {
                     weapon: WeaponPresets.railgun,
                     mount: [0, 0],
                     facing: 90 * deg2Rad,
                     enabled: true
                 },
-                {
+                sniper: {
                     weapon: WeaponPresets.railgun,
                     mount: [0, 0],
                     facing: -90 * deg2Rad,
                     enabled: true
+                }
+            },
+            colliders: [
+                {
+                    part: "hull",
+                    pos: [28, 0],
+                    size: [20, 8]
+                },
+                {
+                    part: "tank",
+                    pos: [0, 0],
+                    size: [36, 12]
+                },
+                {
+                    part: "engine",
+                    pos: [-22, 0],
+                    size: [8, 8]
+                },
+                {
+                    part: "radiator",
+                    pos: [-10, 14],
+                    size: [8, 16]
+                },
+                {
+                    part: "radiator",
+                    pos: [-10, -14],
+                    size: [8, 16]
                 }
             ]
         }),
@@ -52,7 +79,7 @@ class GameObjects {
             torque: 1000,
             rot: Math.PI / 2,
             angVel: 0,
-            sas: false
+            mapSize: 120
         }),
         new Ship({
             team: "ally",
@@ -63,7 +90,8 @@ class GameObjects {
             propMass: 90000,
             thrust: 10000,
             isp: 750,
-            torque: 1000
+            torque: 1000,
+            mapSize: 80
         })
     ];
     static controllingObject = null;
@@ -132,12 +160,16 @@ class GameObjects {
             obj.rot += obj.angVel * (endTime - obj.time);
 
             const sources = this.getGravitySources(obj);
-            const stepFunction = obj.type == "ship"
+            const stepFunction = obj.type === "ship"
                 ? step4thOrderSymplectic
                 : stepSemiImplicitEuler;
             const expireTime = obj.lifetime !== undefined
                 ? obj.startTime + obj.lifetime
                 : Infinity;
+
+            if (obj.type === "projectile") {
+                obj.lastPos = obj.pos;
+            }
 
             while (obj.time < endTime) {
                 if (obj.time > expireTime) return false;

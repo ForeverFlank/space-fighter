@@ -16,6 +16,7 @@ class Projectile {
         this.type = "projectile";
 
         this.pos = pos;
+        this.lastPos = pos;
         this.vel = vel;
         this.parentName = parentName;
 
@@ -35,6 +36,10 @@ class Projectile {
 
     setParent(planet) {
         this.parentName = planet.name;
+    }
+
+    raycast(ship) {
+        
     }
 }
 

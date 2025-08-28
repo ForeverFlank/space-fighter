@@ -1,22 +1,38 @@
 "use strict";
 
+import { Timewarp } from "./main.js";
+
 export const InputState = {
     mousePos: [0, 0],
 
     throttle: 0,
-    sas: false,
+    sas: true,
     turning: 0,
     firing: 0,
 
+    camMode: true,
     selectedWeapon: "cam"
 }
 
-export function setupInput({ canvas, timeSpeedRef, setTimeSpeed }) {
+export function setupInput(canvas) {
     window.addEventListener("keydown", (e) => {
         if (e.key === ",") {
-            setTimeSpeed(Math.max(1, timeSpeedRef() / 10));
-        } else if (e.key === ".") {
-            setTimeSpeed(Math.min(100_000, timeSpeedRef() * 10));
+            Timewarp.index = Math.max(
+                0, Timewarp.index - 1
+            );
+        }
+        if (e.key === ".") {
+            Timewarp.index = Math.min(
+                Timewarp.index + 1, Timewarp.options.length - 1
+            );
+        }
+        if (e.key === '/') {
+            Timewarp.index = 0;
+        }
+        Timewarp.speed = Timewarp.options[Timewarp.index];
+
+        if (e.key === "c") {
+            InputState.camMode = !InputState.camMode;
         }
 
         if (e.key === "t") {
@@ -70,5 +86,10 @@ export function setupInput({ canvas, timeSpeedRef, setTimeSpeed }) {
         if (e.target.tagName !== "BUTTON") return;
         const weapon = e.target.getAttribute("data-weapon");
         InputState.selectedWeapon = weapon;
+    });
+
+    const camButton = document.getElementById("button-cam");
+    camButton.addEventListener("click", () => {
+        InputState.camMode = !InputState.camMode;
     });
 }

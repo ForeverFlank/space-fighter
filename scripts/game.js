@@ -7,6 +7,7 @@ import { InputState } from "./input.js";
 import { FocusTarget, getWorldPos, updateCamera } from "./camera.js";
 import { Planet } from "./planet.js";
 import { deg2Rad } from "./math.js";
+import { Timewarp } from "./main.js";
 
 class Game {
     static start(time = 0) {
@@ -67,9 +68,11 @@ class Game {
         SolarSystem.init(time);
         GameObjects.init(time);
 
-        FocusTarget.type = "planet";
-        FocusTarget.object = SolarSystem.planets["Moon"];
+        // FocusTarget.type = "planet";
+        // FocusTarget.object = SolarSystem.planets["Moon"];
         
+        FocusTarget.type = "ship";
+        FocusTarget.object = GameObjects.controllingObject;
     }
 
     static update(time, timeSpeed, dt) {
@@ -108,16 +111,14 @@ class Game {
         updateCamera(time);
 
         this.updateShipFiring(time);
-
-        if (InputState.firing) {
-            currShip.fire(time);
-        }
     }
 
     static updateShipFiring(time) {
         const currShip = GameObjects.controllingObject;
 
-        if (InputState.firing) {
+        if (InputState.firing &&
+            !InputState.camMode &&
+            Timewarp.index <= Timewarp.maxPhysicsTimewarpIndex) {
             const targetWorldPos = getWorldPos(InputState.mousePos);
             currShip.fire(time, targetWorldPos);
         }

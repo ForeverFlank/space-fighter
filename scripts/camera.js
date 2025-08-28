@@ -7,7 +7,7 @@ import { vecAdd, vecLength, vecMul, vecSub } from "./math.js";
 
 let basePos = [0, 0];
 let camPos = [0, 0];
-let camScale = 100000;
+let camScale = 0.5;
 let camOffset = [0, 0];
 
 const zoomFactor = 1.15;
@@ -59,7 +59,7 @@ canvas.addEventListener("wheel", (e) => {
 }, { passive: false });
 
 canvas.addEventListener("mousedown", (e) => {
-    if (InputState.selectedWeapon !== "cam" || e.button !== 0) return;
+    if (!InputState.camMode || e.button !== 0) return;
 
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;

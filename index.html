@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lekton:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lekton:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
     <link href="./style.css" rel="stylesheet">
     <title>Document</title>
 </head>
@@ -19,18 +20,39 @@
                 <p id="ship-health"></p>
                 <p id="ship-armor"></p>
             </div>
-            <div class="hud-right"">
+            <div class="hud-right">
                 <p id="time"></p>
+                <p id="time-speed"></p>
                 <p id="fps"></p>
             </div>
         </div>
     </div>
     <div class="weapons" id="weapons-menu">
-        <button data-weapon="cam">CAM</button>
-        <button data-weapon="mg">MG</button>
-        <button data-weapon="railgun">RAILGUN</button>
-        <button data-weapon="sniper">SNIPER</button>
-        <button data-weapon="laser">LASER</button>
+        <button class="toggle-btn" id="button-cam" data-color="white">
+            <span class="blend-difference">
+                CAM
+            </span>
+        </button>
+        <button class="toggle-btn" data-weapon="mg">
+            <span class="blend-difference">
+                MG
+            </span>
+        </button>
+        <button class="toggle-btn" data-weapon="railgun">
+            <span class="blend-difference">
+                RAILGUN
+            </span>
+        </button>
+        <button class="toggle-btn" data-weapon="sniper">
+            <span class="blend-difference">
+                SNIPER
+            </span>
+        </button>
+        <button class="toggle-btn" data-weapon="laser">
+            <span class="blend-difference">
+                LASER
+            </span>
+        </button>
     </div>
 </body>
 <script type="module">

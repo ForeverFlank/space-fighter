@@ -5,6 +5,7 @@ import { SolarSystem } from "./solar-system.js";
 import { GameObjects } from "./game-objects.js";
 import { getScreenPos, getScreenSize, updateCamera } from "./camera.js";
 import { drawShipOsculatingOrbit } from "./trajectory-drawer.js";
+import { vecAdd, vecRotate, vecSub } from "./math.js";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -22,9 +23,11 @@ function renderScene(ctx, canvas, time) {
 
     renderPlanetSOIs(ctx);
     renderPlanets(ctx, time);
-    
-    renderObjectOrbits(ctx, time);
-    renderObjects(ctx);
+
+    renderProjectiles(ctx, time);
+
+    renderShipOrbits(ctx, time);
+    renderShips(ctx);
 }
 
 function renderPlanetSOIs(ctx) {
@@ -125,7 +128,7 @@ function drawRotatedTriangle(ctx, screenPos, size, rot) {
     ctx.stroke();
 }
 
-function renderObjectOrbits(ctx, time) {
+function renderShipOrbits(ctx, time) {
     for (const obj of GameObjects.objects) {
         if (obj.type === "ship") {
             const color = obj.team === "ally" ? "#0f0" : "#f00"
@@ -137,32 +140,64 @@ function renderObjectOrbits(ctx, time) {
     }
 }
 
-function renderObjects(ctx) {
+function renderShips(ctx) {
+    for (const ship of GameObjects.objects) {
+        if (ship.type !== "ship") continue;
+
+        const screenPos = getScreenPos(ship.pos);
+        const color = ship.team === "ally" ? "#0f0" : "#f00"
+        ctx.strokeStyle = color;
+
+        const size = Math.max(
+            10, getScreenSize(ship.mapSize)
+        );
+
+        if (size > 10) {
+            for (const col of ship.colliders) {
+                // const rotatedOffset = [
+                //     col.pos[0] * Math.cos(ship.rot) - col.pos[1] * Math.sin(ship.rot),
+                //     col.pos[0] * Math.sin(ship.rot) + col.pos[1] * Math.cos(ship.rot)
+                // ];
+                const rotatedOffset = [0, 0];
+                vecRotate(rotatedOffset, col.pos, ship.rot);
+
+                const worldColPos = [0, 0];
+                vecAdd(worldColPos, ship.pos, rotatedOffset);
+
+                const colPos = getScreenPos(worldColPos);
+                const w = getScreenSize(col.size[0]);
+                const h = getScreenSize(col.size[1]);
+
+                ctx.save();
+
+                ctx.translate(colPos[0], colPos[1]);
+                ctx.rotate(-ship.rot);
+                ctx.strokeRect(-w / 2, -h / 2, w, h);
+
+                ctx.restore();
+            }
+        } else if (GameObjects.controllingObject == ship) {
+            drawRotatedTriangle(
+                ctx,
+                screenPos,
+                size,
+                ship.rot
+            );
+        } else {
+            ctx.strokeRect(
+                screenPos[0] - size / 2,
+                screenPos[1] - size / 2,
+                size, size
+            );
+        }
+    }
+}
+
+function renderProjectiles(ctx, time) {
     for (const obj of GameObjects.objects) {
         const screenPos = getScreenPos(obj.pos);
 
-        if (obj.type === "ship") {
-            const color = obj.team === "ally" ? "#0f0" : "#f00"
-            ctx.strokeStyle = color;
-
-            const size = Math.max(
-                10, getScreenSize(100)
-            );
-            if (GameObjects.controllingObject == obj) {
-                drawRotatedTriangle(
-                    ctx,
-                    screenPos,
-                    size,
-                    obj.rot
-                );
-            } else {
-                ctx.strokeRect(
-                    screenPos[0] - size / 2,
-                    screenPos[1] - size / 2,
-                    size, size
-                );
-            }
-        } else if (obj.type === "projectile") {
+        if (obj.type === "projectile") {
             // if (obj.prevScreenPos === undefined) {
             //     obj.prevScreenPos = screenPos;
             // }
@@ -181,7 +216,7 @@ function renderObjects(ctx) {
             ctx.stroke();
 
             // obj.prevScreenPos = screenPos;
-        } else {
+        } else if (obj.type !== "ship") {
             const size = 8;
             ctx.strokeStyle = "#888";
             ctx.strokeRect(

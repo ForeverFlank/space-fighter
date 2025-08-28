@@ -1,7 +1,14 @@
 "use strict";
 
+import { Timewarp } from "./main.js";
 import { GameObjects } from "./game-objects.js";
+import { InputState } from "./input.js";
 import { formatDate, toDate } from "./time.js";
+
+// document.querySelectorAll(".toggle-btn").forEach(btn => {
+//     const color = btn.dataset.color;
+//     btn.style.setProperty("--btn-color", color);
+// });
 
 export function updateHUD(time) {
     const ship = GameObjects.controllingObject;
@@ -20,7 +27,14 @@ export function updateHUD(time) {
     // document.getElementById("time").innerText =
     //     `T+${days}d ${hours}h ${minutes}m ${seconds.toFixed(1)}s`;
 
+    const camButton = document.getElementById("button-cam");
+    if (InputState.camMode) {
+        camButton.classList.add("on");
+    } else {
+        camButton.classList.remove("on");
+    }
     
     let currDate = toDate(time);
     document.getElementById("time").innerText = formatDate(currDate);
+    document.getElementById("time-speed").innerText = Timewarp.speed + "x";
 }

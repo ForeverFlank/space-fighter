@@ -26,7 +26,8 @@ class Ship {
         maxLaserArmor = 0,
         maxNukeArmor = 0,
         colliders = [],
-        weapons = []
+        weapons = [],
+        mapSize = 100
     } = {}) {
         this.type = "ship";
         this.team = team;
@@ -54,8 +55,10 @@ class Ship {
         this.colliders = colliders;
         this.weapons = weapons;
 
+        this.mapSize = mapSize;
+
         this.throttle = 0;
-        this.sas = false;
+        this.sas = true;
 
         this.rot = Math.PI / 2;
         this.angVel = 0
@@ -90,8 +93,9 @@ class Ship {
     }
 
     fire(time, targetWorldPos) {
-        for (const weapon of this.weapons) {
+        for (const weapon of Object.values(this.weapons)) {
             if (!weapon.enabled) continue;
+
             weapon.weapon.fire(
                 time,
                 this,

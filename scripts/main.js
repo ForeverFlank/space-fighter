@@ -7,10 +7,17 @@ import { Game } from "./game.js";
 import { J2000 } from "./time.js";
 import { updateCamera } from "./camera.js";
 
-const startDate = new Date(Date.UTC(2063, 7, 25, 12, 0, 0))
+const startDate = new Date(Date.UTC(2071, 7, 25, 12, 0, 0))
 let time = (startDate.getTime() - J2000.getTime()) / 1000;
 
-let timeSpeed = 1;
+export const Timewarp = {
+    speed: 1,
+    index: 0,
+    available: true,
+    options: [1, 2, 3, 5, 10, 100, 1000, 10000, 100000],
+    maxPhysicsTimewarpIndex: 3,
+};
+
 let lastLoop = performance.now();
 
 const targetFrameTime = 1 / 60;
@@ -21,11 +28,7 @@ document.addEventListener('contextmenu', (e) =>
 
 function start() {
     Game.start(time);
-    setupInput({
-        canvas,
-        timeSpeedRef: () => timeSpeed,
-        setTimeSpeed: (v) => timeSpeed = v
-    });
+    setupInput(canvas);
     resizeCanvas();
     updateCamera(time);
     requestAnimationFrame(loop);
@@ -34,10 +37,10 @@ function start() {
 function loop() {
     const now = performance.now();
     const frameTime = now - lastLoop;
-    const dt = timeSpeed * targetFrameTime;
+    const dt = Timewarp.speed * targetFrameTime;
     time += dt;
 
-    Game.update(time, timeSpeed, dt);
+    Game.update(time, Timewarp.speed, dt);
     renderScene(ctx, canvas, time);
     updateHUD(time);
 
