@@ -1,5 +1,6 @@
 "use strict"
 
+import { vecAdd } from "./math.js";
 import { Orbit } from "./orbit.js";
 
 class SolarSystem {
@@ -11,30 +12,30 @@ class SolarSystem {
 
     static init(time = 0) {
         this.updatePlanetPositions(time);
-        for (let key in this.planets) {
-            let planet = this.planets[key];
-            let parent = planet.getParent();
+        for (const key in this.planets) {
+            const planet = this.planets[key];
+            const parent = planet.getParent();
             if (parent === undefined) {
                 planet.soi = Infinity;
                 continue;
             }
-            
-            let m = planet.mass;
-            let M = parent.mass;
-            let a = planet.orbit.sma;
 
+            const m = planet.mass;
+            const M = parent.mass;
+            const a = planet.orbit.sma;
             planet.soi = a * Math.pow(m / M, 0.4);
         }
     }
 
     static updatePlanetPositions(time) {
-        for (let key in this.planets) {
-            let planet = this.planets[key];
-            let parent = planet.getParent();
+        for (const key in this.planets) {
+            const planet = this.planets[key];
+            const parent = planet.getParent();
             if (parent === undefined) {
                 planet.localPos = [0, 0];
                 continue;
             }
+
             planet.localPos = Orbit.getPositionAtTime(
                 planet.orbit, parent.mu, time
             );
@@ -42,43 +43,46 @@ class SolarSystem {
     }
 
     static getPlanetPosition(planet) {
-        let parent = planet.getParent();
+        const parent = planet.getParent();
         if (parent === undefined) {
             return [0, 0];
         }
 
-        let pos = planet.localPos;
-        let parentPos = this.getPlanetPosition(parent);
+        const pos = planet.localPos;
+        const parentPos = this.getPlanetPosition(parent);
 
-        return [pos[0] + parentPos[0], pos[1] + parentPos[1]];
+        const out = [0, 0];
+        return vecAdd(out, pos, parentPos);
     }
 
     static getPlanetPositionAtTime(planet, time) {
-        let parent = planet.getParent();
+        const parent = planet.getParent();
         if (parent === undefined) {
             return [0, 0];
         }
 
-        let pos = Orbit.getPositionAtTime(
+        const pos = Orbit.getPositionAtTime(
             planet.orbit, parent.mu, time
         );
-        let parentPos = this.getPlanetPositionAtTime(parent, time);
+        const parentPos = this.getPlanetPositionAtTime(parent, time);
 
-        return [pos[0] + parentPos[0], pos[1] + parentPos[1]];
+        const out = [0, 0];
+        return vecAdd(out, pos, parentPos);
     }
 
     static getPlanetVelocityAtTime(planet, time) {
-        let parent = planet.getParent();
+        const parent = planet.getParent();
         if (parent === undefined) {
             return [0, 0];
         }
 
-        let pos = Orbit.getVelocityAtTime(
+        const pos = Orbit.getVelocityAtTime(
             planet.orbit, parent.mu, time
         );
-        let parentPos = this.getPlanetVelocityAtTime(parent, time);
+        const parentPos = this.getPlanetVelocityAtTime(parent, time);
 
-        return [pos[0] + parentPos[0], pos[1] + parentPos[1]];
+        const out = [0, 0];
+        return vecAdd(out, pos, parentPos);
     }
 }
 

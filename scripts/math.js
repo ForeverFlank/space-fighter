@@ -11,42 +11,54 @@ function vecLengthSq(vec) {
     return vec[0] * vec[0] + vec[1] * vec[1];
 }
 
-function vecAdd(v1, v2) {
-    return [
-        v1[0] + v2[0],
-        v1[1] + v2[1]
-    ]
+function vecNormalize(out, vec) {
+    const len = vecLength(vec);
+    if (len === 0) {
+        out[0] = 0;
+        out[1] = 0;
+    } else {
+        out[0] = vec[0] / len;
+        out[1] = vec[1] / len;
+    }
+    return out;
 }
 
-function vecSub(v1, v2) {
-    return [
-        v1[0] - v2[0],
-        v1[1] - v2[1]
-    ]
+function vecAdd(out, a, b) {
+    out[0] = a[0] + b[0];
+    out[1] = a[1] + b[1];
+    return out;
 }
 
-function vecMul(vec, scalar) {
-    return [
-        vec[0] * scalar,
-        vec[1] * scalar
-    ]
+function vecSub(out, a, b) {
+    out[0] = a[0] - b[0];
+    out[1] = a[1] - b[1];
+    return out;
 }
 
-function vecFromPolar(r, angle) {
-    return [
-        r * Math.cos(angle),
-        r * Math.sin(angle)
-    ];
+function vecMul(out, vec, scalar) {
+    out[0] = vec[0] * scalar;
+    out[1] = vec[1] * scalar;
+    return out;
 }
 
-function vecRotate(vec, angle) {
+function vecFromPolar(out, r, angle) {
+    out[0] = r * Math.cos(angle);
+    out[1] = r * Math.sin(angle);
+    return out;
+}
+
+function vecRotate(out, vec, angle) {
     const c = Math.cos(angle);
     const s = Math.sin(angle);
+    out[0] = vec[0] * c - vec[1] * s;
+    out[1] = vec[0] * s + vec[1] * c;
+    return out;
+}
 
-    return [
-        vec[0] * c - vec[1] * s,
-        vec[0] * s + vec[1] * c
-    ];
+function vecMulAdd(out, a, b, scalar) {
+    out[0] = a[0] + b[0] * scalar;
+    out[1] = a[1] + b[1] * scalar;
+    return out;
 }
 
 function solveBisection(
@@ -78,4 +90,10 @@ function solveBisection(
     return m;
 }
 
-export { twoPi, deg2Rad, vecLength, vecLengthSq, vecAdd, vecSub, vecMul, vecFromPolar, vecRotate, solveBisection }
+export {
+    twoPi, deg2Rad,
+    vecLength, vecLengthSq, vecNormalize,
+    vecAdd, vecSub, vecMul, vecMulAdd,
+    vecFromPolar, vecRotate,
+    solveBisection
+}

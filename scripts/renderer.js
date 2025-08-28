@@ -5,7 +5,6 @@ import { SolarSystem } from "./solar-system.js";
 import { GameObjects } from "./game-objects.js";
 import { getScreenPos, getScreenSize, updateCamera } from "./camera.js";
 import { drawShipOsculatingOrbit } from "./trajectory-drawer.js";
-import { vecMul, vecSub } from "./math.js";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -13,19 +12,6 @@ const ctx = canvas.getContext("2d");
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
-    // const topUI = document.querySelectorAll(".top-ui");
-    // let topHeight = 0;
-    // topUI.forEach(el => topHeight += el.offsetHeight);
-
-    // topHeight *= 0.6;
-
-    // canvas.width = window.innerWidth;
-    // canvas.height = window.innerHeight - topHeight;
-
-    // canvas.style.position = "absolute";
-    // canvas.style.top = `${topHeight}px`;
-    // canvas.style.left = "0";
 }
 window.addEventListener("resize", resizeCanvas);
 
@@ -39,8 +25,6 @@ function renderScene(ctx, canvas, time) {
     
     renderObjectOrbits(ctx, time);
     renderObjects(ctx);
-
-    updateCamera(time);
 }
 
 function renderPlanetSOIs(ctx) {
@@ -143,12 +127,9 @@ function drawRotatedTriangle(ctx, screenPos, size, rot) {
 
 function renderObjectOrbits(ctx, time) {
     for (const obj of GameObjects.objects) {
-        const screenPos = getScreenPos(obj.pos);
-
         if (obj.type === "ship") {
             const color = obj.team === "ally" ? "#0f0" : "#f00"
             ctx.strokeStyle = color;
-            
             // computeShipTrajectory(obj, time);
             // drawShipTrajectory(ctx, obj, time);
             drawShipOsculatingOrbit(ctx, obj, time)

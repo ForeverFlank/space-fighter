@@ -136,10 +136,11 @@ function drawShipOsculatingOrbit(ctx, ship, time) {
 
     const steps = 180;
     let escape = false;
+    let collision = false;
     let newOrbit = null;
     let grandparent = null;
 
-    for (let i = 0; i <= steps && !escape; i++) {
+    for (let i = 0; i <= steps && !escape && !collision; i++) {
         const f = Orbit.getTrueAnomalyFromTime(
             orbit, mu, time
         );
@@ -148,18 +149,23 @@ function drawShipOsculatingOrbit(ctx, ship, time) {
         );
 
         const r2 = vecLengthSq(pos);
+        escape = r2 > soi * soi;
+        collision = r2 < parent.radius * parent.radius;
 
-        if (r2 > soi * soi) {
-            escape = true;
+        if (escape || collision) {
+            let target;
+            if (escape) target = soi;
+            if (collision) target = parent.radius;
 
             const sma = orbit.sma;
             const e = orbit.e;
 
-            let finalF = solveBisection(
+            let left = f + twoPi * (i - 1) / steps;
+            let right = f + twoPi * i / steps;
+
+            const finalF = solveBisection(
                 (m) => Orbit.getRadiusFromTrueAnomaly(sma, e, m),
-                f + twoPi * (i - 1) / steps,
-                f + twoPi * i / steps,
-                soi, 1E-5, 10
+                left, right, target, 1E-5, 10
             );
 
             pos = Orbit.getPositionFromTrueAnomaly(

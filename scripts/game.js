@@ -4,7 +4,7 @@ import { Orbit } from "./orbit.js";
 import { SolarSystem } from "./solar-system.js";
 import { GameObjects } from "./game-objects.js";
 import { InputState } from "./input.js";
-import { FocusTarget, getWorldPos } from "./camera.js";
+import { FocusTarget, getWorldPos, updateCamera } from "./camera.js";
 import { Planet } from "./planet.js";
 import { deg2Rad } from "./math.js";
 
@@ -76,37 +76,50 @@ class Game {
         SolarSystem.updatePlanetPositions(time);
 
         let stepDt = 1 / 60;
-        if (timeSpeed >= 100) stepDt = 1 / 10;
+        if (timeSpeed >= 10) stepDt = 1 / 10;
         if (timeSpeed >= 1_000) stepDt = 1;
         if (timeSpeed >= 10_000) stepDt = 10;
 
-        const ship = GameObjects.controllingObject;
-        ship.throttle = InputState.throttle;
-        ship.sas = InputState.sas;
+        const currShip = GameObjects.controllingObject;
+        currShip.throttle = InputState.throttle;
+        currShip.sas = InputState.sas;
 
         let turning = 0;
-        const torque = ship.torque;
-        const inertia = ship.getInertia();
+        const torque = currShip.torque;
+        const inertia = currShip.getInertia();
         if (InputState.turning != 0) {
             turning = InputState.turning;
-        } else if (ship.sas) {
-            turning = -ship.angVel * inertia / torque / dt;
+        } else if (currShip.sas) {
+            turning = -currShip.angVel * inertia / torque / dt;
         }
         turning = Math.max(-1, Math.min(turning, 1));
         const angAccel = turning * torque / inertia;
-        ship.angVel += angAccel * dt;
+        currShip.angVel += angAccel * dt;
 
-        const sin = Math.sin(ship.rot);
-        const cos = Math.cos(ship.rot);
-        const accel = ship.throttle * ship.thrust / ship.getMass();
+        const sin = Math.sin(currShip.rot);
+        const cos = Math.cos(currShip.rot);
+        const accel = currShip.throttle * currShip.thrust / currShip.getMass();
 
-        ship.vel[0] += cos * accel * dt;
-        ship.vel[1] += sin * accel * dt;
-
-        GameObjects.update(time, stepDt);
+        currShip.vel[0] += cos * accel * dt;
+        currShip.vel[1] += sin * accel * dt;
         
+        GameObjects.update(time, stepDt);
+
+        updateCamera(time);
+
+        this.updateShipFiring(time);
+
         if (InputState.firing) {
-            ship.fire(time);
+            currShip.fire(time);
+        }
+    }
+
+    static updateShipFiring(time) {
+        const currShip = GameObjects.controllingObject;
+
+        if (InputState.firing) {
+            const targetWorldPos = getWorldPos(InputState.mousePos);
+            currShip.fire(time, targetWorldPos);
         }
     }
 }

@@ -5,12 +5,14 @@ import { vecLength, vecLengthSq, twoPi, solveBisection, vecFromPolar, vecRotate 
 const G = 6.67430E-11;
 
 class Orbit {
-    constructor(sma, e, arg, mna, epoch) {
+    constructor(sma, e, arg, mna, epoch, direction = 1
+    ) {
         this.sma = sma;
         this.e = e;
         this.arg = arg;
         this.mna = mna;
         this.epoch = epoch;
+        this.direction = direction;
     }
 
     static solveEccentricAnomaly(M, e) {
@@ -91,73 +93,50 @@ class Orbit {
             mna = sign * (e * Math.sinh(H) - H);
         }
 
-        return new Orbit(a, e, arg, mna, epoch);
+        const h = pos[0] * vel[1] - pos[1] * vel[0];
+        const direction = (h >= 0) ? +1 : -1;
+
+        return new Orbit(a, e, arg, mna, epoch, direction);
     }
 
     static getStateVectors(orbit, mu, time) {
-        const { sma, e, arg, mna, epoch } = orbit;
+        const { sma, e, arg, mna, epoch, direction } = orbit;
 
         const T = twoPi * Math.sqrt(sma * sma * sma / mu);
-        const n = twoPi / T;
+        const n = direction * (twoPi / T);
         const M = mna + n * (time - epoch);
 
         const E = Orbit.solveEccentricAnomaly(M, e);
-
         const cosE = Math.cos(E);
         const sinE = Math.sin(E);
         const sqrtOneMinusE2 = Math.sqrt(1 - e * e);
         const f = Math.atan2(sqrtOneMinusE2 * sinE, cosE - e);
 
         const r = sma * (1 - e * cosE);
+        const pos = [0, 0], vel = [0, 0];
+        vecFromPolar(pos, r, f + arg);
 
-        const pos = vecFromPolar(r, f + arg);
-        const vel = vecRotate([
+        const v = [
             -Math.sqrt(mu * sma) / r * sinE,
-            Math.sqrt(mu * sma) / r * Math.sqrt(1 - e * e) * cosE
-        ], arg);
+            Math.sqrt(mu * sma) / r * sqrtOneMinusE2 * cosE
+        ];
+
+        vecRotate(vel, v, arg);
+
+        if (direction < 0) {
+            vel[0] *= -1;
+            vel[1] *= -1;
+        }
 
         return { pos: pos, vel: vel };
     }
 
     static getPositionAtTime(orbit, mu, time) {
-        const { sma, e, arg, mna, epoch } = orbit;
-
-        const T = twoPi * Math.sqrt(sma * sma * sma / mu);
-        const n = twoPi / T;
-        const M = mna + n * (time - epoch);
-
-        const E = Orbit.solveEccentricAnomaly(M, e);
-
-        const cosE = Math.cos(E);
-        const sinE = Math.sin(E);
-        const sqrtOneMinusE2 = Math.sqrt(1 - e * e);
-        const f = Math.atan2(sqrtOneMinusE2 * sinE, cosE - e);
-
-        const r = sma * (1 - e * cosE);
-
-        return vecFromPolar(r, f + arg);
+        return Orbit.getStateVectors(orbit, mu, time).pos;
     }
 
     static getVelocityAtTime(orbit, mu, time) {
-        const { sma, e, arg, mna, epoch } = orbit;
-
-        const T = twoPi * Math.sqrt(sma * sma * sma / mu);
-        const n = twoPi / T;
-        const M = mna + n * (time - epoch);
-
-        const E = Orbit.solveEccentricAnomaly(M, e);
-
-        const cosE = Math.cos(E);
-        const sinE = Math.sin(E);
-
-        const r = sma * (1 - e * cosE);
-
-        const v = [
-            -Math.sqrt(mu * sma) / r * sinE,
-            Math.sqrt(mu * sma) / r * Math.sqrt(1 - e * e) * cosE
-        ];
-
-        return vecRotate(v, arg);
+        return Orbit.getStateVectors(orbit, mu, time).vel;
     }
 
     static getRadiusFromTrueAnomaly(sma, e, f) {
@@ -165,9 +144,13 @@ class Orbit {
     }
 
     static getPositionFromTrueAnomaly(orbit, f) {
-        const { sma, e, arg } = orbit;
+        const { sma, e, arg, direction } = orbit;
+
         const r = this.getRadiusFromTrueAnomaly(sma, e, f);
-        return vecFromPolar(r, f + arg);
+        const trueAngle = direction * f + arg;
+        
+        const out = [0, 0];
+        return vecFromPolar(out, r, trueAngle);
     }
 
     static getVelocityFromTrueAnomaly(orbit, mu, f) {
@@ -186,12 +169,11 @@ class Orbit {
     }
 
     static getTrueAnomalyFromTime(orbit, mu, time) {
-        const { sma, e, mna, epoch } = orbit;
+        const { sma, e, mna, epoch, direction } = orbit;
 
         const dt = time - epoch;
 
-        let M;
-        let f;
+        let M, f;
         if (e < 1) {
             const T = twoPi * Math.sqrt(sma * sma * sma / mu);
             const n = twoPi / T;
@@ -221,30 +203,39 @@ class Orbit {
         return f;
     }
 
-    static getTimeFromTrueAnomaly(orbit, mu, f, t0 = 0) {
-        const { sma, e } = orbit;
+    static getTimeFromTrueAnomaly(orbit, mu, f) {
+        const { sma, e, mna, epoch, direction } = orbit;
 
         if (e < 1) {
-            const tahHalfF = Math.tan(f / 2);
-            const sqrtFactor = Math.sqrt((1 - e) / (1 + e));
-            let E = 2 * Math.atan(sqrtFactor * tahHalfF);
-            E = (E + twoPi) % twoPi;
+            const cosE = (e + Math.cos(f)) / (1 + e * Math.cos(f));
+            const sinE = (Math.sqrt(1 - e * e) * Math.sin(f)) / (1 + e * Math.cos(f));
+            let E = Math.atan2(sinE, cosE);
 
-            const M = E - e * Math.sin(E);
+            let M = E - e * Math.sin(E);
+            M = ((M % twoPi) + twoPi) % twoPi;
+
             const T = twoPi * Math.sqrt(sma * sma * sma / mu);
+            const n = direction * (twoPi / T);
 
-            const tSincePe = M / twoPi * T;
-            return t0 + tSincePe;
+            let M0 = mna;
+            let dM = M - M0;
+
+            if (direction > 0 && dM < 0) dM += twoPi;
+            if (direction < 0 && dM > 0) dM -= twoPi;
+
+            const dt = dM / n;
+            return epoch + dt;
 
         } else {
-            const tanhHalfF = Math.tan(f / 2);
-            const sqrtFactor = Math.sqrt((e - 1) / (e + 1));
-            const H = 2 * Math.atanh(sqrtFactor * tanhHalfF);
+            const coshH = (e + Math.cos(f)) / (1 + e * Math.cos(f));
+            const H = Math.acosh(coshH) * Math.sign(Math.tan(f / 2));
 
             const M = e * Math.sinh(H) - H;
-            const tSincePe = Math.sqrt(-sma * sma * sma / mu) * M;
+            const n = direction * Math.sqrt(-mu / (sma * sma * sma));
+            const dM = M - mna;
 
-            return t0 + tSincePe;
+            const dt = dM / n;
+            return epoch + dt;
         }
     }
 }

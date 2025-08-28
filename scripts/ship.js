@@ -89,31 +89,17 @@ class Ship {
             this.maxNukeArmor;
     }
 
-    fire(time) {
-        const launchSpeed = 1000;
-        const worldMousePos = getWorldPos(InputState.mousePos);
-
-        const dx = worldMousePos[0] - this.pos[0];
-        const dy = worldMousePos[1] - this.pos[1];
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist === 0) return;
-        
-        const dirX = dx / dist;
-        const dirY = dy / dist;
-
-        GameObjects.objects.push(new Projectile({
-            pos: [...this.pos],
-            vel: [
-                this.vel[0] + dirX * launchSpeed,
-                this.vel[1] + dirY * launchSpeed
-            ],
-            parentName: this.parentName,
-            mass: 0.05,
-            penetration: 1,
-            color: "#ff00ff",
-            startTime: time,
-            lifetime: 3600
-        }));
+    fire(time, targetWorldPos) {
+        for (const weapon of this.weapons) {
+            if (!weapon.enabled) continue;
+            weapon.weapon.fire(
+                time,
+                this,
+                targetWorldPos,
+                weapon.mount,
+                weapon.facing
+            )
+        }
     }
 }
 

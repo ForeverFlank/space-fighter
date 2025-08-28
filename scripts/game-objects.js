@@ -1,9 +1,10 @@
 "use strict";
 
-import { vecLengthSq } from "./math.js";
+import { deg2Rad, vecAdd, vecLengthSq, vecSub } from "./math.js";
 import { Ship } from "./ship.js";
 import { SolarSystem } from "./solar-system.js";
-import { step4thOrderSymplectic } from "./integrator.js";
+import { step4thOrderSymplectic, stepSemiImplicitEuler } from "./integrator.js";
+import { WeaponPresets } from "./weapon-presets.js";
 
 class GameObjects {
     static objects = [
@@ -18,7 +19,27 @@ class GameObjects {
             torque: 1000,
             rot: 0,
             angVel: 0,
-            sas: false
+            sas: false,
+            weapons: [
+                {
+                    weapon: WeaponPresets.mg,
+                    mount: [0, 0],
+                    facing: 0,
+                    enabled: true
+                },
+                {
+                    weapon: WeaponPresets.railgun,
+                    mount: [0, 0],
+                    facing: 90 * deg2Rad,
+                    enabled: true
+                },
+                {
+                    weapon: WeaponPresets.railgun,
+                    mount: [0, 0],
+                    facing: -90 * deg2Rad,
+                    enabled: true
+                }
+            ]
         }),
         new Ship({
             team: "enemy",
@@ -56,14 +77,10 @@ class GameObjects {
                 obj.getParent(), time
             );
 
-            obj.pos = [
-                parentPos[0] + obj.localPos[0],
-                parentPos[1] + obj.localPos[1]
-            ];
-            obj.vel = [
-                parentVel[0] + obj.localVel[0],
-                parentVel[1] + obj.localVel[1]
-            ];
+            const posOut = [0, 0];
+            const velOut = [0, 0];
+            obj.pos = vecAdd(posOut, obj.localPos, parentPos);
+            obj.vel = vecAdd(velOut, obj.localVel, parentVel);
 
             obj.time = time;
         });
@@ -112,36 +129,28 @@ class GameObjects {
             if (!obj.pos || !obj.vel) return true;
             if (obj.time === undefined) obj.time = endTime;
 
-            let expireTime;
-            if (obj.lifetime !== undefined) {
-                expireTime = obj.startTime + obj.lifetime;
-            } else {
-                expireTime = Infinity;
-            }
-
             obj.rot += obj.angVel * (endTime - obj.time);
 
             const sources = this.getGravitySources(obj);
+            const stepFunction = obj.type == "ship"
+                ? step4thOrderSymplectic
+                : stepSemiImplicitEuler;
+            const expireTime = obj.lifetime !== undefined
+                ? obj.startTime + obj.lifetime
+                : Infinity;
 
             while (obj.time < endTime) {
-                if (obj.time > expireTime) {
-                    return false;
-                }
+                if (obj.time > expireTime) return false;
 
-                let remaining = endTime - obj.time;
-                let currDt = Math.min(stepDt, remaining);
+                const remaining = endTime - obj.time;
+                const currDt = Math.min(stepDt, remaining);
 
-                const state = step4thOrderSymplectic(
-                    obj.pos,
-                    obj.vel,
-                    obj.time,
-                    currDt,
-                    sources
+                const state = stepFunction(
+                    obj.pos, obj.vel, obj.time,
+                    currDt, sources
                 );
 
-                if (state === false) {
-                    return false;
-                }
+                if (state === false) return false;
 
                 obj.pos = state.pos;
                 obj.vel = state.vel;
@@ -149,11 +158,13 @@ class GameObjects {
             }
 
             const parent = obj.getParent();
-            const parentPos = SolarSystem.getPlanetPositionAtTime(parent);
-            const relParentPos = [
-                obj.pos[0] - parentPos[0],
-                obj.pos[1] - parentPos[1]
-            ];
+            const parentPos = SolarSystem.getPlanetPositionAtTime(
+                parent, endTime
+            );
+
+            const relParentPos = [0, 0]
+            vecSub(relParentPos, obj.pos, parentPos);
+
             const distToParentSq = vecLengthSq(relParentPos)
             const soi = parent.soi;
             if (distToParentSq > soi * soi) {
@@ -162,10 +173,10 @@ class GameObjects {
 
             for (const sat of parent.getSatellites()) {
                 const satPos = sat.localPos;
-                const relSatPos = [
-                    relParentPos[0] - satPos[0],
-                    relParentPos[1] - satPos[1]
-                ];
+
+                const relSatPos = [0, 0];
+                vecSub(relSatPos, relParentPos, satPos);
+
                 if (vecLengthSq(relSatPos) < sat.soi * sat.soi) {
                     obj.setParent(sat);
                     break;

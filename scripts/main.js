@@ -38,7 +38,6 @@ function loop() {
     time += dt;
 
     Game.update(time, timeSpeed, dt);
-
     renderScene(ctx, canvas, time);
     updateHUD(time);
 

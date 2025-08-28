@@ -3,7 +3,7 @@
 import { InputState } from "./input.js";
 import { SolarSystem } from "./solar-system.js";
 import { GameObjects } from "./game-objects.js";
-import { vecLength } from "./math.js";
+import { vecAdd, vecLength, vecMul, vecSub } from "./math.js";
 
 let basePos = [0, 0];
 let camPos = [0, 0];
@@ -101,15 +101,15 @@ canvas.addEventListener("mousedown", (e) => {
 
 function getScreenPos(worldPos) {
     return [
-        (worldPos[0] - camPos[0]) / camScale + canvas.width/2,
-        canvas.height/2 - (worldPos[1] - camPos[1]) / camScale
+        (worldPos[0] - camPos[0]) / camScale + canvas.width / 2,
+        canvas.height / 2 - (worldPos[1] - camPos[1]) / camScale
     ];
 }
 
 function getWorldPos(screenPos) {
     return [
-        (screenPos[0] - canvas.width/2) * camScale + camPos[0],
-        camPos[1] + (canvas.height/2 - screenPos[1]) * camScale
+        (screenPos[0] - canvas.width / 2) * camScale + camPos[0],
+        camPos[1] + (canvas.height / 2 - screenPos[1]) * camScale
     ];
 }
 
@@ -128,18 +128,17 @@ function updateCamera(time) {
         ? SolarSystem.getPlanetPositionAtTime(FocusTarget.object, time)
         : FocusTarget.object.pos;
 
-    const diff = [
-        (zoomTarget[0] - camOffset[0]) * zoomRatio,
-        (zoomTarget[1] - camOffset[1]) * zoomRatio,
-    ];
+    const diff = [0, 0];
+    const tmp = [0, 0];
 
-    camOffset = [
-        zoomTarget[0] - diff[0],
-        zoomTarget[1] - diff[1],
-    ];
-    
-    camPos[0] = basePos[0] + camOffset[0];
-    camPos[1] = basePos[1] + camOffset[1];
+    vecSub(diff, zoomTarget, camOffset);
+    vecMul(tmp, diff, zoomRatio);
+    vecSub(diff, zoomTarget, tmp);
+
+    camOffset[0] = diff[0];
+    camOffset[1] = diff[1];
+
+    vecAdd(camPos, basePos, camOffset);
 }
 
 export {
