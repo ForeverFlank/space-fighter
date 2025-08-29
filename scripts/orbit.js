@@ -169,7 +169,7 @@ class Orbit {
     }
 
     static getTrueAnomalyFromTime(orbit, mu, time) {
-        const { sma, e, mna, epoch } = orbit;
+        const { sma, e, mna, epoch, direction } = orbit;
 
         const dt = time - epoch;
 
@@ -186,26 +186,28 @@ class Orbit {
             const sinE = Math.sin(E);
             const sqrtOneMinusE2 = Math.sqrt(1 - e * e);
 
-            f = Math.atan2(sqrtOneMinusE2 * sinE, cosE - e);
+            f = direction * Math.atan2(sqrtOneMinusE2 * sinE, cosE - e);
         } else {
             const n = Math.sqrt(-mu / (sma * sma * sma));
             M = mna + n * dt;
-
+            
             const H = Orbit.solveEccentricAnomaly(M, e);
 
             const coshH = Math.cosh(H);
             const sinhH = Math.sinh(H);
             const sqrtE2Minus1 = Math.sqrt(e * e - 1);
-
+            
             f = Math.atan2(sqrtE2Minus1 * sinhH, e - coshH);
         }
-
+        
+        f = ((f % twoPi) + twoPi) % twoPi;
         return f;
     }
-
+    
     static getTimeFromTrueAnomaly(orbit, mu, f) {
         const { sma, e, mna, epoch, direction } = orbit;
-
+        f = ((f % twoPi) + twoPi) % twoPi;
+        
         if (e < 1) {
             const cosE = (e + Math.cos(f)) / (1 + e * Math.cos(f));
             const sinE = (Math.sqrt(1 - e * e) * Math.sin(f)) / (1 + e * Math.cos(f));
@@ -232,6 +234,7 @@ class Orbit {
 
             const M = e * Math.sinh(H) - H;
             const n = direction * Math.sqrt(-mu / (sma * sma * sma));
+            // const n = Math.sqrt(-mu / (sma * sma * sma));
             const dM = M - mna;
 
             const dt = dM / n;

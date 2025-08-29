@@ -9,8 +9,6 @@ class Ship {
         parentName = null,
         startLocalPos = [0, 0],
         startLocalVel = [0, 0],
-        thrust = 0,
-        isp = 0,
         torque = 0,
         projectileArmor = 0,
         laserArmor = 0,
@@ -19,7 +17,6 @@ class Ship {
         maxLaserArmor = 0,
         maxNukeArmor = 0,
         parts = [],
-        weapons = [],
         mapSize = 100
     } = {}) {
         this.type = "ship";
@@ -29,8 +26,6 @@ class Ship {
         this.localVel = startLocalVel;
         this.parentName = parentName;
 
-        this.thrust = thrust;
-        this.isp = isp;
         this.torque = torque;
 
         this.projectileArmor = projectileArmor;
@@ -41,7 +36,6 @@ class Ship {
         this.maxNukeArmor = maxNukeArmor;
 
         this.parts = parts;
-        this.weapons = weapons;
 
         this.mapSize = mapSize;
 
@@ -49,34 +43,19 @@ class Ship {
         this.sas = true;
 
         this.rot = Math.PI / 2;
-        this.angVel = 0
+        this.angVel = 0;
 
-        this.parts.forEach((part) => {
-            const area = part.size[0] * part.size[1];
-            part.mass = part.density * area;
-
-            part.maxHealth = part.healthPerArea * area;
-            part.health = part.maxHealth;
-
-            part.maxProjectileArmor = part.armorPerArea[0] * area;
-            part.maxLaserArmor = part.armorPerArea[1] * area;
-            part.maxNukeArmor = part.armorPerArea[2] * area;
-
-            part.projectileArmor = part.maxProjectileArmor;
-            part.laserArmor = part.maxLaserArmor;
-            part.nukeArmor = part.maxNukeArmor;
-
-            part.projectileReduction = part.armorReduction[0];
-            part.laserReduction = part.armorReduction[1];
-            part.nukeReduction = part.armorReduction[2];
-
-            if (part.hitChance === undefined) {
-                part.hitChance = 1;
+        this.weapons = [];
+        this.engines = [];
+        for (const part of parts) {
+            if (part.partType === "Weapon") {
+                part.enabled = true;
+                this.weapons.push(part);
             }
-            if (part.damageMultiplier === undefined) {
-                part.damageMultiplier = 1;
+            if (part.partType === "Engine") {
+                this.engines.push(part);
             }
-        });
+        }
     }
 
     getParent() {
@@ -118,9 +97,9 @@ class Ship {
     getTotalArmor() {
         let res = 0;
         for (const part of this.parts) {
-            res += part.projectileArmor;
-            res += part.laserArmor;
-            res += part.nukeArmor;
+            res += part.armor[0];
+            res += part.armor[1];
+            res += part.armor[2];
         }
         return res;
     }
@@ -128,24 +107,41 @@ class Ship {
     getMaxArmor() {
         let res = 0;
         for (const part of this.parts) {
-            res += part.maxProjectileArmor;
-            res += part.maxLaserArmor;
-            res += part.maxNukeArmor;
+            res += part.maxArmor[0];
+            res += part.maxArmor[1];
+            res += part.maxArmor[2];
         }
         return res;
+    }
+
+    getThrust() {
+        let totalThrust = 0;
+        for (const engine of this.engines) {
+            if (engine.health === 0) continue;
+            totalThrust += engine.thrust;
+        }
+        return totalThrust;
+    }
+    
+    getIsp() {
+        let totalThrust = 0, totalMassFlow = 0;
+        for (const engine of this.engines) {
+            if (engine.health === 0) continue;
+            totalThrust += engine.thrust;
+            totalMassFlow += engine.thrust / engine.isp;
+        }
+        if (totalMassFlow === 0) return 0;
+        return totalThrust / totalMassFlow;
     }
 
     fire(time, targetWorldPos) {
         for (const weapon of Object.values(this.weapons)) {
             if (!weapon.enabled) continue;
 
-            weapon.weapon.fire(
-                time,
-                this,
-                targetWorldPos,
-                weapon.mount,
-                weapon.facing
-            )
+            weapon.fire(
+                time, this,
+                targetWorldPos
+            );
         }
     }
 
@@ -160,7 +156,6 @@ class Ship {
             if (Math.random() > part.hitChance) continue;
 
             const damage = energy * Math.cos(hit.angle) * part.damageMultiplier;
-            // console.log(damage)
             const applied = damage * (1 - part.projectileReduction);
             part.projectileArmor -= damage - applied;
             part.health -= applied;

@@ -1,14 +1,19 @@
 "use strict";
 
-class Weapon {
-    constructor({
-        name
-    }) {
-        this.name = name;
+import { Part } from "./part.js";
+
+class Weapon extends Part {
+    constructor(opts = {}) {
+        super({
+            partType: "Weapon",
+            density: 100,
+            healthPerArea: 50,
+            ...opts
+        });
     }
 
-    fire(time) {
-
+    fire(time, ship) {
+        
     }
 }
 

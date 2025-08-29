@@ -15,7 +15,7 @@ export const Timewarp = {
     index: 0,
     available: true,
     options: [1, 2, 3, 5, 10, 100, 1000, 10000, 100000],
-    maxPhysicsTimewarpIndex: 3,
+    maxPhysicsTimewarpIndex: 2,
 };
 
 let lastLoop = performance.now();

@@ -5,7 +5,7 @@ import { getScreenPos } from "./camera.js";
 import { SolarSystem } from "./solar-system.js";
 import { GameObjects } from "./game-objects.js";
 import { getAccel } from "./integrator.js";
-import { vecLengthSq, twoPi, solveBisection } from "./math.js";
+import { vecLengthSq, twoPi, solveBisection, vecAdd } from "./math.js";
 
 // unused
 function computeShipTrajectory(ship, time) {
@@ -140,13 +140,12 @@ function drawShipOsculatingOrbit(ctx, ship, time) {
     let newOrbit = null;
     let grandparent = null;
 
+    const fStart = Orbit.getTrueAnomalyFromTime(orbit, mu, time);
+
     for (let i = 0; i <= steps && !escape && !collision; i++) {
-        const f = Orbit.getTrueAnomalyFromTime(
-            orbit, mu, time
-        );
-        let pos = Orbit.getPositionFromTrueAnomaly(
-            orbit, f + twoPi * i / steps
-        );
+        const fCurr = fStart + twoPi * i / steps;
+
+        let pos = Orbit.getPositionFromTrueAnomaly(orbit, fCurr);
 
         const r2 = vecLengthSq(pos);
         escape = r2 > soi * soi;
@@ -160,8 +159,8 @@ function drawShipOsculatingOrbit(ctx, ship, time) {
             const sma = orbit.sma;
             const e = orbit.e;
 
-            let left = f + twoPi * (i - 1) / steps;
-            let right = f + twoPi * i / steps;
+            let left = fStart + twoPi * (i - 1) / steps;
+            let right = fStart + twoPi * i / steps;
 
             const finalF = solveBisection(
                 (m) => Orbit.getRadiusFromTrueAnomaly(sma, e, m),
@@ -203,8 +202,7 @@ function drawShipOsculatingOrbit(ctx, ship, time) {
             );
         }
 
-        pos[0] += parentPos[0];
-        pos[1] += parentPos[1];
+        vecAdd(pos, pos, parentPos);
 
         const screenPos = getScreenPos(pos);
 

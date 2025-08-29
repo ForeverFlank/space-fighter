@@ -7,44 +7,49 @@ import { Weapon } from "./weapon.js";
 
 class ProjectileWeapon extends Weapon {
     constructor({
-        name,
-        projectileTemplate,
+        weaponName = "",
+        projectileTemplate = {},
         fireRate = 10,
         projectileSpeed = 1000,
+        facing = 0,
         firingArc = twoPi,
-        spreadAngle = 0
+        spreadAngle = 0,
+        ...opts
     }) {
-        super({ name });
+        super({ ...opts });
 
+        this.weaponName = weaponName;
         this.projectileTemplate = projectileTemplate;
 
         this.fireRate = fireRate;
         this.projectileSpeed = projectileSpeed;
 
+        this.facing = facing;
         this.firingArc = firingArc;
         this.spreadAngle = spreadAngle;
         this.cooldown = 0;
     }
 
-    fire(time, ship, targetWorldPos, mountOffset = [0, 0], facing = 0) {
+    fire(time, ship, targetWorldPos) {
         if (time < this.cooldown) return;
         this.cooldown = time + 1 / this.fireRate;
 
         const gunPos = [0, 0];
-        vecAdd(gunPos, ship.pos, mountOffset);
+        vecRotate(gunPos, this.pos, ship.rot);
+        vecAdd(gunPos, ship.pos, gunPos);
 
         const dir = [0, 0];
         vecSub(dir, targetWorldPos, gunPos);
         vecNormalize(dir, dir);
 
-        const mountAngle = facing + ship.rot;
+        const mountAngle = this.facing + ship.rot;
         const angleToTarget = Math.atan2(dir[1], dir[0]);
-        
+
         let relAngle = angleToTarget - mountAngle;
         relAngle = ((relAngle % twoPi) + twoPi) % twoPi;
         if (relAngle > Math.PI) relAngle = twoPi - relAngle;
 
-        // if (Math.abs(relAngle) > this.firingArc / 2) return;
+        if (Math.abs(relAngle) > this.firingArc / 2) return;
 
         const halfSpread = this.spreadAngle / 2;
         const randomAngle = this.spreadAngle * Math.random() - halfSpread;

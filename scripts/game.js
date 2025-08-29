@@ -101,7 +101,7 @@ class Game {
 
         const sin = Math.sin(currShip.rot);
         const cos = Math.cos(currShip.rot);
-        const accel = currShip.throttle * currShip.thrust / currShip.getMass();
+        const accel = currShip.throttle * currShip.getThrust() / currShip.getMass();
 
         currShip.vel[0] += cos * accel * dt;
         currShip.vel[1] += sin * accel * dt;

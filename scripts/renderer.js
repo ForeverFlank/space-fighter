@@ -187,19 +187,27 @@ function renderShips(ctx) {
                 const rotatedOffset = [0, 0];
                 vecRotate(rotatedOffset, part.pos, ship.rot);
 
-                const worldColPos = [0, 0];
-                vecAdd(worldColPos, ship.pos, rotatedOffset);
+                const worldPos = [0, 0];
+                vecAdd(worldPos, ship.pos, rotatedOffset);
 
-                const colPos = getScreenPos(worldColPos);
-                const w = getScreenSize(part.size[0]);
-                const h = getScreenSize(part.size[1]);
+                const screenPos = getScreenPos(worldPos);
+
+                const wTop = getScreenSize(part.size[0]);
+                const wBottom = getScreenSize(part.size[1]);
+                const h = getScreenSize(part.size[2]);
 
                 ctx.save();
-
-                ctx.translate(colPos[0], colPos[1]);
+                ctx.translate(screenPos[0], screenPos[1]);
                 ctx.rotate(-ship.rot);
-                ctx.strokeRect(-w / 2, -h / 2, w, h);
 
+                ctx.beginPath();
+                ctx.moveTo(h / 2, -wTop / 2);
+                ctx.lineTo(h / 2, wTop / 2);
+                ctx.lineTo(-h / 2, wBottom / 2);
+                ctx.lineTo(-h / 2, -wBottom / 2);
+                ctx.closePath();
+
+                ctx.stroke();
                 ctx.restore();
             }
         } else if (GameObjects.controllingObject == ship) {
@@ -234,16 +242,24 @@ function renderProjectiles(ctx, time) {
 
         ctx.fillStyle = proj.color;
         ctx.strokeStyle = proj.color;
+
+        ctx.save();
+
+        ctx.lineWidth = 2;
+
         ctx.beginPath();
         ctx.moveTo(...startPos);
         ctx.lineTo(...screenPos);
         ctx.stroke();
-        // ctx.arc(
-        //     screenPos[0],
-        //     screenPos[1],
-        //     2,
-        //     0, 2 * Math.PI);
-        // ctx.fill();
+
+        ctx.restore();
+        ctx.beginPath();
+        ctx.arc(
+            screenPos[0],
+            screenPos[1],
+            1,
+            0, 2 * Math.PI);
+        ctx.fill();
 
         proj.prevScreenPos = screenPos;
     }
