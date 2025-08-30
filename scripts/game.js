@@ -72,7 +72,7 @@ class Game {
         // FocusTarget.object = SolarSystem.planets["Moon"];
         
         FocusTarget.type = "ship";
-        FocusTarget.object = GameObjects.controllingObject;
+        FocusTarget.object = GameObjects.controllingShip;
     }
 
     static update(time, timeSpeed, dt) {
@@ -83,7 +83,7 @@ class Game {
         if (timeSpeed >= 1_000) stepDt = 1;
         if (timeSpeed >= 10_000) stepDt = 10;
 
-        const currShip = GameObjects.controllingObject;
+        const currShip = GameObjects.controllingShip;
         currShip.throttle = InputState.throttle;
         currShip.sas = InputState.sas;
 
@@ -115,7 +115,7 @@ class Game {
     }
 
     static updateShipFiring(time) {
-        const currShip = GameObjects.controllingObject;
+        const currShip = GameObjects.controllingShip;
 
         if (InputState.firing &&
             !InputState.camMode &&

@@ -19,6 +19,19 @@ function calculateRicochetChance(projectile, cosAngle, v2) {
     return angleFactor ** velFactor;
 }
 
+function displayNumber(num) {
+    if (num < 1_000) {
+        return Math.round(num);
+    }
+    if (num < 10_000) {
+        return (num / 1_000).toFixed(2) + "k";
+    }
+    if (num < 1_000_000) {
+        return (num / 1_000).toFixed(1) + "k";
+    }
+    return (num / 1_000_000).toFixed(2) + "M";
+}
+
 class Ship {
     constructor({
         team = "neutral",
@@ -37,19 +50,17 @@ class Ship {
         this.localPos = startLocalPos;
         this.localVel = startLocalVel;
         this.parentName = parentName;
-
-        this.torque = torque;
-
-        this.parts = parts;
-
         this.mapSize = mapSize;
-
+        this.parts = parts;
+        
         this.throttle = 0;
         this.sas = true;
-
+        
         this.rot = rot;
         this.angVel = angVel;
+        this.torque = torque;
 
+        this.maxHealth = 0;
         this.maxPower = 0;
         this.maxHeat = 0;
 
@@ -57,8 +68,12 @@ class Ship {
         this.reactors = [];
         this.radiators = [];
         this.weapons = [];
-
-        this.maxHealth = 0;
+        
+        this.enabledWeapons = {
+            "mg": false,
+            "cannon": false,
+            "sniper": false,
+        };
 
         for (const part of parts) {
             if (part.partType === "Engine") {
@@ -72,7 +87,6 @@ class Ship {
                 this.radiators.push(part);
             }
             if (part.partType === "Weapon") {
-                part.enabled = true;
                 this.weapons.push(part);
             }
 
@@ -100,6 +114,16 @@ class Ship {
         healthBar.appendChild(healthBarValue);
         this.healthBarValue = healthBarValue;
 
+        const armorBar = document.createElement("div");
+        armorBar.classList.add("ship-ui-armor-bar");
+        containerUI.appendChild(armorBar);
+        this.armorBar = armorBar;
+
+        const armorBarValue = document.createElement("div");
+        armorBarValue.classList.add("ship-ui-armor-bar-value");
+        armorBar.appendChild(armorBarValue);
+        this.armorBarValue = armorBarValue;
+
         const healthText = document.createElement("p");
         healthText.classList.add("ship-ui-health-text");
         containerUI.appendChild(healthText);
@@ -107,6 +131,7 @@ class Ship {
     }
 
     destroy() {
+        this.containerUI.innerHTML = "";
         this.containerUI.remove();
     }
 
@@ -138,10 +163,12 @@ class Ship {
         return res;
     }
 
-    getMaxHealth() {
-        let res = 0;
+    getArmorAmount() {
+        let res = [0, 0, 0];
         for (const part of this.parts) {
-            res += part.maxHealth;
+            res[0] += part.armor[0];
+            res[1] += part.armor[1];
+            res[2] += part.armor[2];
         }
         return res;
     }
@@ -225,25 +252,43 @@ class Ship {
         const y = screenPos[1] + Math.max(
             screenSize, shipCloseupThresold
         );
-        this.containerUI.style.position = "absolute";
+        this.containerUI.style.position = "fixed";
         this.containerUI.style.left = x + "px";
         this.containerUI.style.top = y + "px";
 
         const totalHealth = this.getTotalHealth();
         const maxHealth = this.maxHealth;
-        this.healthText.innerText = Math.round(
-            this.getTotalHealth()
-        );
+        const healthPercent = 100 * totalHealth / maxHealth;
 
-        this.healthBarValue.style.width = (
-            100 * totalHealth / maxHealth
-        ) + "%";
+        const totalArmor = this.getTotalArmor();
+        const maxArmor = this.getMaxArmor();
+        const armorPercent = 100 * totalArmor / maxArmor;
 
+        this.healthBarValue.style.width = healthPercent + "%";
+        this.armorBarValue.style.width = armorPercent + "%";
+
+        const armor = this.getArmorAmount();
+        const total = armor.reduce((a, b) => a + b, 0);
+        const width = armor.map(a => (a / total) * 100);
+        const stops = [
+            `#aaa 0% ${width[0]}%`,
+            `#3dd ${width[0]}% ${width[0] + width[1]}%`,
+            `#ea0 ${width[0] + width[1]}% 100%`
+        ];
+
+        this.armorBarValue.style.background =
+            `linear-gradient(to right, ${stops.join(', ')})`;
+
+        this.healthText.innerText =
+            "❤ " + displayNumber(totalHealth) + " | " +
+            "⛊ " + displayNumber(totalArmor);
     }
 
     fire(time, targetWorldPos) {
-        for (const weapon of Object.values(this.weapons)) {
-            if (!weapon.enabled) continue;
+        for (const weapon of this.weapons) {
+            if (!this.enabledWeapons[weapon.weaponClass]) {
+                continue;
+            }
 
             weapon.fire(
                 time, this,

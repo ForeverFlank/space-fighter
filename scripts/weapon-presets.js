@@ -6,13 +6,14 @@ import { ProjectileWeapon } from "./projectile-weapon.js";
 export const WeaponPresets = {
     mg: ({ pos = [0, 0], direction = 0 }) => new ProjectileWeapon({
         weaponName: "Machine Gun",
+        weaponClass: "mg",
         pos: pos,
         facing: direction * 0.5 * Math.PI,
         projectileTemplate: {
             mass: 0.05,
             penetration: 10,
             color: "#ff00ff",
-            lifetime: 3600
+            lifetime: 5 * 60
         },
         size: [2, 2, 2],
         fireRate: 20,
@@ -22,13 +23,14 @@ export const WeaponPresets = {
         powerUsage: 0.1,
         heatGeneration: 6
     }),
-    railgun: ({ pos = [0, 0], direction = 0 }) => new ProjectileWeapon({
-        weaponName: "Railgun",
+    cannon: ({ pos = [0, 0], direction = 0 }) => new ProjectileWeapon({
+        weaponName: "Cannon",
+        weaponClass: "cannon",
         projectileTemplate: {
             mass: 0.1,
-            penetration: 20,
+            penetration: 25,
             color: "#00ffff",
-            lifetime: 3600
+            lifetime: 5 * 60
         },
         pos: pos,
         facing: direction * 0.5 * Math.PI,
@@ -44,11 +46,12 @@ export const WeaponPresets = {
     }),
     sniper: ({ pos = [0, 0], direction = 0 }) => new ProjectileWeapon({
         weaponName: "Sniper",
+        weaponClass: "sniper",
         projectileTemplate: {
-            mass: 0.02,
-            penetration: 20,
+            mass: 0.01,
+            penetration: 100,
             color: "#ffff00",
-            lifetime: 3600
+            lifetime: 5 * 60
         },
         pos: pos,
         facing: direction * 0.5 * Math.PI,

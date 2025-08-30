@@ -8,6 +8,7 @@ import { Weapon } from "./weapon.js";
 class ProjectileWeapon extends Weapon {
     constructor({
         weaponName = "",
+        weaponClass = "",
         projectileTemplate = {},
         fireRate = 10,
         projectileSpeed = 1000,
@@ -21,6 +22,7 @@ class ProjectileWeapon extends Weapon {
         super({ ...opts });
 
         this.weaponName = weaponName;
+        this.weaponClass = weaponClass;
         this.projectileTemplate = projectileTemplate;
 
         this.fireRate = fireRate;

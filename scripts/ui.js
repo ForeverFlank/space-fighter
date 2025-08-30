@@ -12,12 +12,12 @@ import { getScreenPos, getScreenSize } from "./camera.js";
 // });
 
 function updateUI(time) {
-    const currShip = GameObjects.controllingObject;
+    const currShip = GameObjects.controllingShip;
 
     if (currShip) {
         document.getElementById("ship-health").innerText =
             "Health: " + Math.round(currShip.getTotalHealth()) +
-            "/" + Math.round(currShip.getMaxHealth());
+            "/" + Math.round(currShip.maxHealth);
 
         document.getElementById("ship-armor").innerText =
             "Armor: " + Math.round(currShip.getTotalArmor()) +
@@ -48,6 +48,17 @@ function updateUI(time) {
         camButton.classList.add("on");
     } else {
         camButton.classList.remove("on");
+    }
+
+    const weaponMenu = document.getElementById("weapons-menu");
+    for (const key in currShip.enabledWeapons) {
+        const btn = weaponMenu.querySelector(`[data-weapon="${key}"]`);
+        if (btn == null) console.log('e')
+        if (currShip.enabledWeapons[key]) {
+            btn.classList.add("on");
+        } else {
+            btn.classList.remove("on");
+        }
     }
 
     let currDate = toDate(time);

@@ -212,7 +212,7 @@ function renderShips(ctx) {
                 ctx.stroke();
                 ctx.restore();
             }
-        } else if (GameObjects.controllingObject == ship) {
+        } else if (GameObjects.controllingShip == ship) {
             ctx.strokeStyle = color;
             drawRotatedTriangle(
                 ctx,

@@ -1,5 +1,6 @@
 "use strict";
 
+import { GameObjects } from "./game-objects.js";
 import { Timewarp } from "./main.js";
 
 export const InputState = {
@@ -12,8 +13,7 @@ export const InputState = {
     turningRight: 0,
     firing: 0,
 
-    camMode: true,
-    selectedWeapon: "cam"
+    camMode: false
 }
 
 export function setupInput(canvas) {
@@ -56,7 +56,7 @@ export function setupInput(canvas) {
         }
         InputState.turning = InputState.turningLeft + InputState.turningRight;
     });
-    
+
     window.addEventListener("keyup", (e) => {
         if (e.key === "q") {
             InputState.turningLeft = 0;
@@ -91,9 +91,20 @@ export function setupInput(canvas) {
 
     const weaponsContainer = document.getElementById("weapons-menu");
     weaponsContainer.addEventListener("click", (e) => {
-        if (e.target.tagName !== "BUTTON") return;
-        const weapon = e.target.getAttribute("data-weapon");
-        InputState.selectedWeapon = weapon;
+        const button = e.target.closest("button[data-weapon]");
+        if (!button) return;
+
+        const ship = GameObjects.controllingShip;
+        const enabledWeapons = ship.enabledWeapons;
+
+        weaponsContainer.querySelectorAll("button[data-weapon]").forEach((btn) => {
+            const weapon = btn.getAttribute("data-weapon");
+            if (!weapon) return;
+
+            if (btn === button) {
+                enabledWeapons[weapon] = !enabledWeapons[weapon];
+            }
+        });
     });
 
     const camButton = document.getElementById("button-cam");

@@ -22,17 +22,17 @@ class GameObjects {
                 new HullPart({
                     pos: [28, 0],
                     size: [6, 12, 20],
-                    armorTiers: [1, 1, 0]
+                    armorTiers: [2, 1, 0]
                 }),
                 new ControlPart({
                     pos: [14, 0],
                     size: [12, 12, 8],
-                    armorTiers: [1, 1, 0]
+                    armorTiers: [2, 1, 0]
                 }),
                 new TankPart({
                     pos: [-4, 0],
                     size: [12, 12, 28],
-                    armorTiers: [1, 1, 0]
+                    armorTiers: [2, 1, 0]
                 }),
                 new RadiatorPart({
                     pos: [-18, 16],
@@ -66,7 +66,7 @@ class GameObjects {
                     direction: -1,
                     armorTiers: [2, 0, 0]
                 }),
-                WeaponPresets.railgun({
+                WeaponPresets.cannon({
                     pos: [40, 0],
                     direction: 0,
                     armorTiers: [2, 0, 0]
@@ -96,17 +96,17 @@ class GameObjects {
                 new HullPart({
                     pos: [28, 0],
                     size: [6, 12, 20],
-                    armorTiers: [1, 1, 0]
+                    armorTiers: [2, 1, 0]
                 }),
                 new ControlPart({
                     pos: [14, 0],
                     size: [12, 12, 8],
-                    armorTiers: [1, 1, 0]
+                    armorTiers: [2, 1, 0]
                 }),
                 new TankPart({
                     pos: [-4, 0],
                     size: [12, 12, 28],
-                    armorTiers: [1, 1, 0]
+                    armorTiers: [2, 1, 0]
                 }),
                 new RadiatorPart({
                     pos: [-18, 16],
@@ -140,7 +140,7 @@ class GameObjects {
                     direction: -1,
                     armorTiers: [2, 0, 0]
                 }),
-                WeaponPresets.railgun({
+                WeaponPresets.cannon({
                     pos: [40, 0],
                     direction: 0,
                     armorTiers: [2, 0, 0]
@@ -149,7 +149,7 @@ class GameObjects {
         }),
     ];
     static projectiles = [];
-    static controllingObject = null;
+    static controllingShip = null;
 
     static init(time = 0) {
         this.ships.forEach(obj => {
@@ -169,7 +169,7 @@ class GameObjects {
             obj.time = time;
         });
 
-        this.controllingObject = this.ships[0];
+        this.controllingShip = this.ships[0];
     }
 
     static getGravitySources(obj) {
