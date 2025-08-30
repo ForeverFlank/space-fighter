@@ -6,8 +6,37 @@ import { GameObjects } from "./game-objects.js";
 import { InputState } from "./input.js";
 import { FocusTarget, getWorldPos, updateCamera } from "./camera.js";
 import { Planet } from "./planet.js";
-import { deg2Rad, vecLengthSq, vecSub } from "./math.js";
+import { deg2Rad, vecAdd, vecDot, vecLength, vecLengthSq, vecMul, vecSub } from "./math.js";
 import { Timewarp } from "./main.js";
+
+function segmentToPointDistance(p0, p1, q) {
+    const p0q = [0, 0], p0p1 = [0, 0];
+    vecSub(p0q, q, p0);
+    vecSub(p0p1, p1, p0);
+
+    const proj = [0, 0], d = [0, 0];
+    const l = vecDot(p0q, p0p1) / vecLengthSq(p1);
+    vecMul(proj, p1, l);
+    vecAdd(d, proj, p0);
+
+    const p0d = [0, 0]
+    vecSub(p0d, d, p0);
+
+    const k = Math.abs(p0p1.x) > Math.abs(p0p1.y)
+        ? p0d[0] / p0p1[0]
+        : p0d[1] / p0p1[1];
+
+    const out = [0, 0];
+    if (k <= 0.0) {
+        vecSub(out, q, p0);
+    } else if (k >= 1.0) {
+        vecSub(out, q, p1);
+    } else {
+        vecSub(out, q, d);
+    }
+    
+    return vecLength(out);
+}
 
 class Game {
     static start(time = 0) {
@@ -130,9 +159,13 @@ class Game {
             for (const ship of GameObjects.ships) {
                 if (proj.team === ship.team) continue;
 
-                const dist = [0, 0];
-                vecSub(dist, proj.pos, ship.pos);
-                if (vecLengthSq(dist) < ship.mapSize * ship.mapSize) {
+                const relLastPos = [0, 0], relPos = [0, 0];
+                vecSub(relLastPos, proj.lastPos, ship.lastPos);
+                vecSub(relPos, proj.pos, ship.pos);
+                const dist = segmentToPointDistance(
+                    relLastPos, relPos, [0, 0]
+                );
+                if (dist < 2 * ship.mapSize) {
                     proj.raycast(ship);
                 }
             }

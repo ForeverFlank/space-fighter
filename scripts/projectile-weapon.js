@@ -15,8 +15,8 @@ class ProjectileWeapon extends Weapon {
         facing = 0,
         firingArc = twoPi,
         spreadAngle = 0,
-        powerUsage = 10,
-        heatGeneration = 10,
+        efficiency = 0.5,
+        heatFactor = 0.5,
         ...opts
     }) {
         super({ ...opts });
@@ -33,8 +33,13 @@ class ProjectileWeapon extends Weapon {
         this.spreadAngle = spreadAngle;
         this.cooldown = 0;
 
-        this.powerUsage = powerUsage;
-        this.heatGeneration = heatGeneration;
+        const energy =
+            0.0005 * projectileTemplate.mass *
+            projectileSpeed * projectileSpeed;
+        const totalPower = energy / efficiency;
+
+        this.powerUsage = 1E-6 * energy * totalPower;
+        this.heatGeneration = 10 * this.powerUsage * heatFactor;
     }
 
     fire(time, ship, targetWorldPos) {

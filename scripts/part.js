@@ -110,9 +110,9 @@ class EnginePart extends Part {
 
 class ReactorPart extends Part {
     constructor({
-        powerGeneration = 10,
-        heatGeneration = 10,
-        powerStorage = 1000,
+        powerGeneration = 5,
+        heatGeneration = 20,
+        powerStorage = 2500,
         ...opts
     }) {
         super({
@@ -128,7 +128,7 @@ class ReactorPart extends Part {
 
 class RadiatorPart extends Part {
     constructor({
-        dissipationPerArea = 2,
+        dissipationPerArea = 0.1,
         ...opts
     }) {
         super({

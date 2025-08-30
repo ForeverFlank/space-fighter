@@ -220,6 +220,7 @@ class Ship {
                 this.heat += reactor.heatGeneration * dt;
             }
         }
+        
         for (const radiator of this.radiators) {
             if (radiator.health > 0) {
                 this.heat -= radiator.getDissipationRate() * dt;

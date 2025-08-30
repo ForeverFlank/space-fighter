@@ -12,8 +12,8 @@ class GameObjects {
         new Ship({
             team: "ally",
             parentName: "Moon",
-            startLocalPos: [6978000, 0],
-            startLocalVel: [0, 860],
+            startLocalPos: [4500000, 0],
+            startLocalVel: [0, 1050],
             thrust: 100000,
             torque: 1000,
             mapSize: 40,
@@ -46,9 +46,7 @@ class GameObjects {
                 }),
                 new ReactorPart({
                     pos: [-22, 0],
-                    size: [12, 12, 8],
-                    powerGeneration: 10,
-                    heatGeneration: 20
+                    size: [12, 12, 8]
                 }),
                 new EnginePart({
                     pos: [-30, 0],
@@ -86,12 +84,12 @@ class GameObjects {
         new Ship({
             team: "enemy",
             parentName: "Moon",
-            startLocalPos: [6978900, 0],
-            startLocalVel: [0, 860],
+            startLocalPos: [6000000, 0],
+            startLocalVel: [50, 900],
             thrust: 100000,
             torque: 1000,
             mapSize: 40,
-            angVel: 0.2,
+            rot: 0,
             parts: [
                 new HullPart({
                     pos: [28, 0],
@@ -120,9 +118,7 @@ class GameObjects {
                 }),
                 new ReactorPart({
                     pos: [-22, 0],
-                    size: [12, 12, 8],
-                    powerGeneration: 10,
-                    heatGeneration: 20
+                    size: [12, 12, 8]
                 }),
                 new EnginePart({
                     pos: [-30, 0],
@@ -131,17 +127,27 @@ class GameObjects {
                     isp: 750
                 }),
                 WeaponPresets.mg({
-                    pos: [2, 7],
+                    pos: [6, 7],
                     direction: 1,
                     armorTiers: [2, 0, 0]
                 }),
                 WeaponPresets.mg({
-                    pos: [2, -7],
+                    pos: [6, -7],
                     direction: -1,
                     armorTiers: [2, 0, 0]
                 }),
                 WeaponPresets.cannon({
                     pos: [40, 0],
+                    direction: 0,
+                    armorTiers: [2, 0, 0]
+                }),
+                WeaponPresets.sniper({
+                    pos: [-4, 7],
+                    direction: 0,
+                    armorTiers: [2, 0, 0]
+                }),
+                WeaponPresets.sniper({
+                    pos: [-4, -7],
                     direction: 0,
                     armorTiers: [2, 0, 0]
                 })
