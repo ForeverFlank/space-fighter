@@ -37,11 +37,9 @@ button:hover {
     flex-direction: column;
     width: 15vw;
     row-gap: 0.5em;
-    pointer-events: all;
 }
 
 .hud-left * {
-    background-color: #202020;
     margin: 0;
 }
 
@@ -52,16 +50,10 @@ button:hover {
     right: 0;
     width: 15vw;
     row-gap: 0.5em;
-    pointer-events: all;
 }
 
 .hud-right * {
-    background-color: #202020;
     margin: 0;
-}
-
-.dummy {
-    background-color: palevioletred;
 }
 
 .weapons {

@@ -1,6 +1,6 @@
 "use strict";
 
-import { vecDot, vecLengthSq, vecSub } from "./math.js";
+import { vecAdd, vecDot, vecLengthSq, vecMul, vecRotate, vecSub } from "./math.js";
 import { SolarSystem } from "./solar-system.js";
 
 class Ship {
@@ -10,12 +10,8 @@ class Ship {
         startLocalPos = [0, 0],
         startLocalVel = [0, 0],
         torque = 0,
-        projectileArmor = 0,
-        laserArmor = 0,
-        nukeArmor = 0,
-        maxProjectileArmor = 0,
-        maxLaserArmor = 0,
-        maxNukeArmor = 0,
+        rot = 0.5 * Math.PI,
+        angVel = 0,
         parts = [],
         mapSize = 100
     } = {}) {
@@ -28,13 +24,6 @@ class Ship {
 
         this.torque = torque;
 
-        this.projectileArmor = projectileArmor;
-        this.laserArmor = laserArmor;
-        this.nukeArmor = nukeArmor;
-        this.maxProjectileArmor = maxProjectileArmor;
-        this.maxLaserArmor = maxLaserArmor;
-        this.maxNukeArmor = maxNukeArmor;
-
         this.parts = parts;
 
         this.mapSize = mapSize;
@@ -42,20 +31,42 @@ class Ship {
         this.throttle = 0;
         this.sas = true;
 
-        this.rot = Math.PI / 2;
-        this.angVel = 0;
+        this.rot = rot;
+        this.angVel = angVel;
 
-        this.weapons = [];
+        this.maxPower = 0;
+        this.maxHeat = 0;
+
         this.engines = [];
+        this.reactors = [];
+        this.radiators = [];
+        this.weapons = [];
+        
         for (const part of parts) {
+            if (part.partType === "Engine") {
+                this.engines.push(part);
+            }
+            if (part.partType === "Reactor") {
+                this.reactors.push(part);
+                this.maxPower += part.powerStorage;
+            }
+            if (part.partType === "Radiator") {
+                this.radiators.push(part);
+            }
             if (part.partType === "Weapon") {
                 part.enabled = true;
                 this.weapons.push(part);
             }
-            if (part.partType === "Engine") {
-                this.engines.push(part);
-            }
+
+            this.maxHeat += part.mass * 0.01;
         }
+
+        this.totalPower = this.maxPower;
+        this.totalHeat = 0;
+    }
+
+    updateResources(dt) {
+
     }
 
     getParent() {
@@ -85,7 +96,7 @@ class Ship {
         }
         return res;
     }
-    
+
     getMaxHealth() {
         let res = 0;
         for (const part of this.parts) {
@@ -122,7 +133,7 @@ class Ship {
         }
         return totalThrust;
     }
-    
+
     getIsp() {
         let totalThrust = 0, totalMassFlow = 0;
         for (const engine of this.engines) {
@@ -145,24 +156,55 @@ class Ship {
         }
     }
 
-    applyProjectileDamages(projecitle, hits) {
+    applyProjectileDamages(projectile, hits) {
         const relVel = [0, 0];
-        vecSub(relVel, projecitle.vel, this.vel);
+        vecSub(relVel, projectile.vel, this.vel);
 
-        const energy = 0.0005 * projecitle.mass * vecLengthSq(relVel);
+        const energy = 0.0005 * projectile.mass * vecLengthSq(relVel);
 
         for (const hit of hits) {
             const part = hit.part;
-            if (Math.random() > part.hitChance) continue;
 
-            const damage = energy * Math.cos(hit.angle) * part.damageMultiplier;
-            const applied = damage * (1 - part.projectileReduction);
-            part.projectileArmor -= damage - applied;
+            // if (Math.random() < part.hitChance) continue;
+            if (hit.damageFactor <= 0) continue;
+
+            
+            const damage = energy * hit.damageFactor;
+            const applied = damage * (1 - part.armorReduction[0]);
+            part.armor[0] -= damage - applied;
             part.health -= applied;
+            projectile.penetration -= damage;
 
-            if (part.projectileArmor < 0) part.projectileArmor = 0;
+            if (part.partType !== "Radiator") {
+                const normal = hit.normal;
+                vecRotate(normal, normal, this.rot);
+
+                const relVel = [0, 0], rhs = [0, 0];
+                vecSub(relVel, projectile.vel, this.vel);
+                vecMul(rhs, normal, 2 * vecDot(relVel, normal));
+                vecSub(relVel, relVel, rhs);
+                vecAdd(relVel, relVel, this.vel);
+
+                const hitPos = [0, 0];
+                vecAdd(hitPos, hit.pos, hit.part.pos);
+                vecRotate(hitPos, hitPos, this.rot);
+                vecAdd(hitPos, hitPos, this.pos);
+                
+                projectile.pos = hitPos;
+                projectile.vel = relVel;
+            }
+            
+            if (part.armor[0] < 0) part.armor[0] = 0;
             if (part.health < 0) part.health = 0;
+            // if (projectile.penetration < 0) {
+            //     return {
+            //         part: part,
+            //         pos: hit.pos
+            //     };
+            // }
         }
+
+        return null;
     }
 }
 

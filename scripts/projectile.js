@@ -1,10 +1,165 @@
 "use strict";
 
-import { twoPi, vecDot, vecLengthSq, vecNormalize, vecRotate, vecSub } from "./math.js";
+import { vecAdd, vecDot, vecLengthSq, vecMul, vecNormalize, vecRotate, vecSub } from "./math.js";
 import { SolarSystem } from "./solar-system.js";
 
-function isBetween(num, a, b) {
-    return (a < num && num < b) || (a > num && num > b);
+function onSegment(p, q, r) {
+    return (
+        q[0] <= Math.max(p[0], r[0]) &&
+        q[0] >= Math.min(p[0], r[0]) &&
+        q[1] <= Math.max(p[1], r[1]) &&
+        q[1] >= Math.min(p[1], r[1])
+    );
+}
+
+function checkWinding(p, q, r) {
+    let val =
+        (q[1] - p[1]) * (r[0] - q[0]) -
+        (q[0] - p[0]) * (r[1] - q[1]);
+
+    if (val === 0) return 0;
+    return (val > 0) ? 1 : -1;
+}
+
+function intersectInto(p0, p1, q0, q1) {
+    let o1 = checkWinding(p0, p1, q0);
+    let o2 = checkWinding(p0, p1, q1);
+    let o3 = checkWinding(q0, q1, p0);
+    let o4 = checkWinding(q0, q1, p1);
+
+    if (o1 === 1 && o2 === -1 && o3 !== o4)
+        return true;
+
+    if (o1 === 0 &&
+        onSegment(p0, q0, p1)) return true;
+
+    if (o2 === 0 &&
+        onSegment(p0, q1, p1)) return true;
+
+    if (o3 === 0 &&
+        onSegment(q0, p0, q1)) return true;
+
+    if (o4 === 0 &&
+        onSegment(q0, p1, q1)) return true;
+
+    return false;
+}
+
+function raycastRectangle(p0, p1, m, dir, part, hits) {
+    const isRadiator = part.partType === "Radiator";
+
+    const halfWidth = 0.5 * part.size[0];
+    const halfHeight = 0.5 * part.size[2];
+    const c = p0[1] - m * p0[0];
+
+    const topSideHit = intersectInto(p0, p1,
+        [-halfHeight, halfWidth],
+        [halfHeight, halfWidth],
+    );
+    const rightSideHit = intersectInto(p0, p1,
+        [halfHeight, halfWidth],
+        [halfHeight, -halfWidth],
+    );
+    const bottomSideHit = intersectInto(p0, p1,
+        [halfHeight, -halfWidth],
+        [-halfHeight, -halfWidth],
+    );
+    const leftSideHit = intersectInto(p0, p1,
+        [-halfHeight, -halfWidth],
+        [-halfHeight, halfWidth],
+    );
+
+    let x, y,  damageFactor;
+    if (topSideHit) {
+        y = halfWidth;
+        x = (y - c) / m;
+        damageFactor = isRadiator ? 1 + dir[1] : -dir[1];
+        hits.push({ part, pos: [x, y], normal: [0, 1], damageFactor});
+    }
+    if (bottomSideHit) {
+        y = -halfWidth;
+        x = (y - c) / m;
+        damageFactor = isRadiator ? 1 - dir[1] : dir[1];
+        hits.push({ part, pos: [x, y], normal: [0, -1], damageFactor });
+    }
+    if (leftSideHit) {
+        x = -halfHeight;
+        y = m * x + c;
+        damageFactor = dir[0];
+        hits.push({ part, pos: [x, y], normal: [-1, 0], damageFactor });
+    }
+    if (rightSideHit) {
+        x = halfHeight
+        y = m * x + c;
+        damageFactor = -dir[0];
+        hits.push({ part, pos: [x, y], normal: [1, 0], damageFactor });
+    }
+}
+
+function raycastTrapezoid(p0, p1, m, dir, part, hits) {
+    const slope = 0.5 * (part.size[0] - part.size[1]) / part.size[2];
+
+    const halfWidthRight = 0.5 * part.size[0];
+    const halfWidthLeft = 0.5 * part.size[1];
+    const halfHeight = 0.5 * part.size[2];
+    const c = p0[1] - m * p0[0];
+
+    function topSideEq(x) {
+        return slope * (x + halfHeight) + halfWidthLeft;
+    }
+    function bottomSideEq(x) {
+        return -slope * (x + halfHeight) - halfWidthLeft;
+    }
+
+    const q0 = [-halfHeight, halfWidthLeft];
+    const q1 = [halfHeight, halfWidthRight];
+    const q2 = [halfHeight, -halfWidthRight];
+    const q3 = [-halfHeight, -halfWidthLeft];
+
+    const topSideHit = intersectInto(p0, p1, q0, q1);
+    const rightSideHit = intersectInto(p0, p1, q1, q2);
+    const bottomSideHit = intersectInto(p0, p1, q2, q3);
+    const leftSideHit = intersectInto(p0, p1, q3, q0);
+
+    let x, y, damageFactor;
+    if (topSideHit) {
+        const lhs = m - slope;
+        const rhs = slope * halfHeight + halfWidthLeft - c;
+        x = rhs / lhs;
+        y = topSideEq(x);
+
+        const normal = [Math.abs(slope), -1];
+        vecNormalize(normal, normal);
+
+        damageFactor = vecDot(dir, normal);
+        vecMul(normal, normal, -1);
+        hits.push({ part, pos: [x, y], normal, damageFactor });
+    }
+    if (bottomSideHit) {
+        const lhs = m + slope;
+        const rhs = -slope * halfHeight - halfWidthLeft - c;
+        x = rhs / lhs;
+        y = bottomSideEq(x);
+
+        const normal = [Math.abs(slope), 1];
+        vecNormalize(normal, normal);
+        
+        damageFactor = vecDot(dir, normal);
+        vecMul(normal, normal, -1);
+        hits.push({ part, pos: [x, y], normal, damageFactor });
+    }
+    if (leftSideHit) {
+        x = -halfHeight;
+        y = m * x + c;
+        damageFactor = dir[0];
+        hits.push({ part, pos: [x, y], normal: [-1, 0], damageFactor });
+    }
+    if (rightSideHit) {
+        x = halfHeight
+        y = m * x + c;
+        damageFactor = -dir[0];
+        hits.push({ part, pos: [x, y], normal: [1, 0], damageFactor });
+    }
 }
 
 class Projectile {
@@ -46,154 +201,55 @@ class Projectile {
     }
 
     raycast(ship) {
-        const p0 = [0, 0];
-        const p1 = [0, 0];
-        vecSub(p0, this.lastPos, ship.lastPos);
-        vecSub(p1, this.pos, ship.pos);
-        vecRotate(p0, p0, -ship.rot);
-        vecRotate(p1, p1, -ship.rot);
-        vecSub(p0, p0, part.pos);
-        vecSub(p1, p1, part.pos);
+        const p0Orig = [0, 0], p1Orig = [0, 0];
+        const p0 = [0, 0], p1 = [0, 0];
+        vecSub(p0Orig, this.lastPos, ship.lastPos);
+        vecSub(p1Orig, this.pos, ship.pos);
+        vecRotate(p0Orig, p0Orig, -ship.rot);
+        vecRotate(p1Orig, p1Orig, -ship.rot);
 
         const dir = [0, 0];
-        vecSub(dir, p1, p0);
+        vecSub(dir, p1Orig, p0Orig);
         vecNormalize(dir, dir);
 
         const hits = [];
-        const m = (p1[1] - p0[1]) / (p1[0] - p0[0]);
+        const m = (p1Orig[1] - p0Orig[1]) / (p1Orig[0] - p0Orig[0]);
 
         for (const part of ship.parts) {
+            vecSub(p0, p0Orig, part.pos);
+            vecSub(p1, p1Orig, part.pos);
+
             if (part.size[0] === part.size[1]) {
-                const halfWidth = part.size[0] / 2;
-                const halfHeight = part.size[2] / 2;
-
-                const leftSideHit = p0[0] < p1[0];
-                const topSideHit = p0[1] > p1[1];
-
-                if (leftSideHit) {
-                    const y = m * (-halfWidth - p0[0]) + p0[1];
-                    if (-halfHeight <= y && y <= halfHeight) {
-                        hits.push({
-                            part: part,
-                            pos: [-halfWidth, y],
-                            angle: Math.acos(vecDot(dir, [1, 0]))
-                        })
-                    }
-                } else {
-                    const y = m * (halfWidth - p0[0]) + p0[1];
-                    if (-halfHeight <= y && y <= halfHeight) {
-                        hits.push({
-                            part: part,
-                            pos: [halfWidth, y],
-                            angle: Math.acos(vecDot(dir, [-1, 0]))
-                        })
-                    }
-
-                }
-                if (topSideHit) {
-                    const x = (halfHeight - p0[1]) / m + p0[0];
-                    if (-halfWidth <= x && x <= halfWidth) {
-                        hits.push({
-                            part: part,
-                            pos: [x, halfHeight],
-                            angle: Math.acos(vecDot(dir, [0, -1]))
-                        })
-                    }
-                } else {
-                    const x = (-halfHeight - p0[1]) / m + p0[0];
-                    if (-halfWidth <= x && x <= halfWidth) {
-                        hits.push({
-                            part: part,
-                            pos: [x, -halfHeight],
-                            angle: Math.acos(vecDot(dir, [0, 1]))
-                        })
-                    }
-                }
+                raycastRectangle(p0, p1, m, dir, part, hits);
             } else {
-                const m2 = 2 * h / (part.size[1] - part.size[0]);
-                const s = m * p0[0] - p0[1];
-                const halfWidthTop = part.size[0] / 2;
-                const halfWidthBtm = part.size[1] / 2;
-                const halfHeight = part.size[2] / 2;
-
-                function leftSideEq(x) {
-                    return m2 * (x + halfWidthBtm) - halfHeight;
-                }
-
-                function rightSideEq(x) {
-                    return -m2 * (x - halfWidthTop) + halfHeight;
-                }
-
-                const leftSideHit = (m2 > 0) === 
-                    p0[1] > leftSideEq(p0[0]) &&
-                    p1[1] < leftSideEq(p1[0]);
-                const rightSideHit = (m2 > 0) === 
-                    p0[1] > rightSideEq(p0[0]) &&
-                    p1[1] < rightSideEq(p1[0]);
-                const topSideHit = p0[1] > p1[1];
-
-                if (leftSideHit) {
-                    const lhs = m - m2;
-                    const rhs = s + m2 * halfWidthBtm - halfHeight;
-                    const x = rhs / lhs;
-                    if (isBetween(x, -halfWidthTop, -halfWidthBtm)) {   
-                        const normal = m2 > 0
-                            ? [m2, -1]
-                            : [-m2, 1];
-                        vecNormalize(normal, normal);
-                        hits.push({
-                            part: part,
-                            pos: [x, leftSideEq(x)],
-                            angle: Math.acos(vecDot(dir, normal))
-                        })
-                    }
-                }
-                if (rightSideHit) {
-                    const lhs = m + m2;
-                    const rhs = s + m2 * halfWidthTop + halfHeight;
-                    const x = rhs / lhs;
-                    if (isBetween(x, halfWidthTop, halfWidthBtm)) {   
-                        const normal = m2 > 0
-                            ? [-m2, -1]
-                            : [m2, 1];
-                        vecNormalize(normal, normal);
-                        hits.push({
-                            part: part,
-                            pos: [x, leftSideEq(x)],
-                            angle: Math.acos(vecDot(dir, normal))
-                        })
-                    }
-                }
-                if (topSideHit) {
-                    const x = (halfHeight - p0[1]) / m + p0[0];
-                    if (-halfWidthTop <= x && x <= halfWidthTop) {
-                        hits.push({
-                            part: part,
-                            pos: [x, halfHeight],
-                            angle: Math.acos(vecDot(dir, [0, -1]))
-                        })
-                    }
-                } else {
-                    const x = (-halfHeight - p0[1]) / m + p0[0];
-                    if (-halfWidthBtm <= x && x <= halfWidthBtm) {
-                        hits.push({
-                            part: part,
-                            pos: [x, -halfHeight],
-                            angle: Math.acos(vecDot(dir, [0, 1]))
-                        })
-                    }
-                }
+                raycastTrapezoid(p0, p1, m, dir, part, hits);
             }
         }
 
         const d0 = [0, 0], d1 = [0, 0];
         hits.sort((a, b) => {
-            vecSub(d0, p0, a);
-            vecSub(d1, p1, b);
+            vecSub(d0, p0Orig, a.pos);
+            vecSub(d1, p0Orig, b.pos);
             return vecLengthSq(d0) - vecLengthSq(d1);
         });
 
-        ship.applyProjectileDamages(this, hits);
+        // console.log(hits.map(h => {
+        //     const x = [0, 0];
+        //     return vecLengthSq(vecSub(x, p0Orig, h.pos));
+        // }));
+        const finalHit = ship.applyProjectileDamages(this, hits);
+
+        if (finalHit !== null) {
+            const finalPos = [0, 0];
+            vecAdd(finalPos, finalHit.pos, finalHit.part.pos);
+            vecRotate(finalPos, finalPos, ship.rot);
+            vecAdd(finalPos, finalPos, ship.pos);
+
+            this.pos = finalPos;
+            return false;
+        }
+
+        return true;
     }
 }
 

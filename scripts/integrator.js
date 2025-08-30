@@ -1,6 +1,6 @@
 "use strict";
 
-import { vecAdd, vecLength, vecLengthSq, vecMul, vecMulAdd, vecSub } from "./math.js";
+import { vecAdd, vecLengthSq, vecMul, vecMulAdd, vecSub } from "./math.js";
 import { G } from "./orbit.js";
 import { SolarSystem } from "./solar-system.js";
 

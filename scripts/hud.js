@@ -14,10 +14,21 @@ export function updateHUD(time) {
     const ship = GameObjects.controllingObject;
 
     if (ship) {
-        document.getElementById("ship-health").innerText = 
-            `Health: ${ship.getTotalHealth()}/${ship.getMaxHealth()}`;
-        document.getElementById("ship-armor").innerText = 
-            `Armor: ${ship.getTotalArmor()}/${ship.getMaxArmor()}`;
+        document.getElementById("ship-health").innerText =
+            "Health: " + Math.round(ship.getTotalHealth()) +
+            "/" + Math.round(ship.getMaxHealth());
+
+        document.getElementById("ship-armor").innerText =
+            "Armor: " + Math.round(ship.getTotalArmor()) +
+            "/" + Math.round(ship.getMaxArmor());
+
+        document.getElementById("ship-power").innerText =
+            "Power: " + Math.round(ship.totalPower) +
+            "/" + Math.round(ship.maxPower);
+
+        document.getElementById("ship-heat").innerText =
+            "Heat: " + Math.round(ship.totalHeat) +
+            "/" + Math.round(ship.maxHeat);
     }
 
     // const days = Math.floor(time / 86400);

@@ -133,7 +133,9 @@ class Game {
                 const dist = [0, 0];
                 vecSub(dist, proj.pos, ship.pos);
                 if (vecLengthSq(dist) < ship.mapSize * ship.mapSize) {
-                    proj.raycast(ship);
+                    if (!proj.raycast(ship)) {
+                        proj.toBeDestroyed = true;
+                    }
                 }
             }
         }

@@ -1,11 +1,11 @@
 "use strict";
 
-import { vecAdd, vecLengthSq, vecSub } from "./math.js";
+import { deg2Rad, twoPi, vecAdd, vecLengthSq, vecSub } from "./math.js";
 import { Ship } from "./ship.js";
 import { SolarSystem } from "./solar-system.js";
 import { step4thOrderSymplectic, stepSemiImplicitEuler } from "./integrator.js";
 import { WeaponPresets } from "./weapon-presets.js";
-import { EnginePart, HullPart, RadiatorPart, TankPart } from "./part.js";
+import { ControlPart, EnginePart, HullPart, RadiatorPart, ReactorPart, TankPart } from "./part.js";
 
 class GameObjects {
     static ships = [
@@ -16,8 +16,71 @@ class GameObjects {
             startLocalVel: [0, 860],
             thrust: 100000,
             torque: 1000,
+            mapSize: 50,
+            parts: [
+                new HullPart({
+                    pos: [28, 0],
+                    size: [6, 12, 20],
+                    armorTiers: [1, 1, 0]
+                }),
+                new ControlPart({
+                    pos: [14, 0],
+                    size: [12, 12, 8],
+                    armorTiers: [1, 1, 0]
+                }),
+                new TankPart({
+                    pos: [-4, 0],
+                    size: [12, 12, 28],
+                    armorTiers: [1, 1, 0]
+                }),
+                new RadiatorPart({
+                    pos: [-18, 16],
+                    size: [20, 20, 8],
+                    armorTiers: [1, 0, 0]
+                }),
+                new RadiatorPart({
+                    pos: [-18, -16],
+                    size: [20, 20, 8],
+                    armorTiers: [1, 0, 0]
+                }),
+                new ReactorPart({
+                    pos: [-22, 0],
+                    size: [12, 12, 8],
+                    thrust: 100000,
+                    isp: 750
+                }),
+                new EnginePart({
+                    pos: [-30, 0],
+                    size: [4, 6, 8],
+                    thrust: 100000,
+                    isp: 750
+                }),
+                WeaponPresets.mg({
+                    pos: [2, 7],
+                    direction: 1,
+                    armorTiers: [2, 0, 0]
+                }),
+                WeaponPresets.mg({
+                    pos: [2, -7],
+                    direction: -1,
+                    armorTiers: [2, 0, 0]
+                }),
+                WeaponPresets.railgun({
+                    pos: [40, 0],
+                    direction: 0,
+                    armorTiers: [2, 0, 0]
+                })
+            ]
+        }),
+        new Ship({
+            team: "enemy",
+            parentName: "Moon",
+            startLocalPos: [6978090, 0],
+            startLocalVel: [0, 860],
+            thrust: 100000,
+            torque: 1000,
             rot: 0,
-            angVel: 0,
+            angVel: 0.5,
             mapSize: 50,
             parts: [
                 new HullPart({
@@ -122,6 +185,7 @@ class GameObjects {
     }
 
     static updateObject(obj, endTime, stepDt) {
+        if (obj.toBeDestroyed) return false;
         if (!obj.pos || !obj.vel) return true;
         if (obj.time === undefined) obj.time = endTime;
 
@@ -130,6 +194,7 @@ class GameObjects {
         if (obj.type === "ship") {
             obj.lastRot = obj.rot;
             obj.rot += obj.angVel * (endTime - obj.time);
+            obj.rot %= twoPi;
         }
 
         const sources = this.getGravitySources(obj);
@@ -185,13 +250,16 @@ class GameObjects {
 
     static update(endTime, stepDt) {
         this.ships = this.ships.filter(ship =>
-            this.updateObject(ship, endTime, stepDt));
+            this.updateObject(ship, endTime, stepDt)
+        );
 
         this.projectiles = this.projectiles.filter(proj =>
-            this.updateObject(proj, endTime, stepDt));
+            this.updateObject(proj, endTime, stepDt)
+        );
 
         this.projectiles = this.projectiles.filter(p =>
-            endTime < p.startTime + p.lifetime);
+            endTime < p.startTime + p.lifetime
+        );
     }
 }
 

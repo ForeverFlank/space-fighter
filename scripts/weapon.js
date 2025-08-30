@@ -7,13 +7,14 @@ class Weapon extends Part {
         super({
             partType: "Weapon",
             density: 100,
-            healthPerArea: 50,
+            healthPerArea: 200,
+            hitChance: 0.01,
             ...opts
         });
     }
 
     fire(time, ship) {
-        
+
     }
 }
 

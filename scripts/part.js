@@ -10,7 +10,8 @@ class Part {
         density = 100,
         healthPerArea = 100,
         armorTiers = [0, 0, 0],
-        armorEffectivity = 1
+        armorEffectivity = 1,
+        hitChance = 1
     }) {
         this.partType = partType;
         this.pos = pos;
@@ -40,6 +41,8 @@ class Part {
         this.armor = [...this.maxArmor];
 
         this.armorReduction = [...this.armorConfig.reduction];
+
+        this.hitChance = hitChance;
     }
 
     getMass() {
@@ -112,6 +115,7 @@ class ReactorPart extends Part {
     constructor({
         powerGeneration = 100,
         heatGeneration = 10,
+        powerStorage = 1000,
         ...opts
     }) {
         super({
@@ -122,6 +126,7 @@ class ReactorPart extends Part {
         });
         this.powerGeneration = powerGeneration;
         this.heatGeneration = heatGeneration;
+        this.powerStorage = powerStorage;
     }
 }
 

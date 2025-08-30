@@ -8,6 +8,8 @@ export const InputState = {
     throttle: 0,
     sas: true,
     turning: 0,
+    turningLeft: 0,
+    turningRight: 0,
     firing: 0,
 
     camMode: true,
@@ -46,17 +48,23 @@ export function setupInput(canvas) {
             InputState.throttle = 0;
         }
 
-        InputState.turning = 0;
         if (e.key === "q") {
-            InputState.turning += 1;
+            InputState.turningLeft = 1;
         }
         if (e.key === "e") {
-            InputState.turning -= 1;
+            InputState.turningRight = -1;
         }
+        InputState.turning = InputState.turningLeft + InputState.turningRight;
     });
-
+    
     window.addEventListener("keyup", (e) => {
-        InputState.turning = 0;
+        if (e.key === "q") {
+            InputState.turningLeft = 0;
+        }
+        if (e.key === "e") {
+            InputState.turningRight = 0;
+        }
+        InputState.turning = InputState.turningLeft + InputState.turningRight;
     });
 
     canvas.addEventListener("mousedown", (e) => {
