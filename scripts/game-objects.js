@@ -16,7 +16,8 @@ class GameObjects {
             startLocalVel: [0, 860],
             thrust: 100000,
             torque: 1000,
-            mapSize: 50,
+            mapSize: 40,
+            rot: 0,
             parts: [
                 new HullPart({
                     pos: [28, 0],
@@ -46,8 +47,82 @@ class GameObjects {
                 new ReactorPart({
                     pos: [-22, 0],
                     size: [12, 12, 8],
+                    powerGeneration: 10,
+                    heatGeneration: 20
+                }),
+                new EnginePart({
+                    pos: [-30, 0],
+                    size: [4, 6, 8],
                     thrust: 100000,
                     isp: 750
+                }),
+                WeaponPresets.mg({
+                    pos: [6, 7],
+                    direction: 1,
+                    armorTiers: [2, 0, 0]
+                }),
+                WeaponPresets.mg({
+                    pos: [6, -7],
+                    direction: -1,
+                    armorTiers: [2, 0, 0]
+                }),
+                WeaponPresets.railgun({
+                    pos: [40, 0],
+                    direction: 0,
+                    armorTiers: [2, 0, 0]
+                }),
+                WeaponPresets.sniper({
+                    pos: [-4, 7],
+                    direction: 0,
+                    armorTiers: [2, 0, 0]
+                }),
+                WeaponPresets.sniper({
+                    pos: [-4, -7],
+                    direction: 0,
+                    armorTiers: [2, 0, 0]
+                })
+            ]
+        }),
+        new Ship({
+            team: "enemy",
+            parentName: "Moon",
+            startLocalPos: [6978900, 0],
+            startLocalVel: [0, 860],
+            thrust: 100000,
+            torque: 1000,
+            mapSize: 40,
+            angVel: 0.2,
+            parts: [
+                new HullPart({
+                    pos: [28, 0],
+                    size: [6, 12, 20],
+                    armorTiers: [1, 1, 0]
+                }),
+                new ControlPart({
+                    pos: [14, 0],
+                    size: [12, 12, 8],
+                    armorTiers: [1, 1, 0]
+                }),
+                new TankPart({
+                    pos: [-4, 0],
+                    size: [12, 12, 28],
+                    armorTiers: [1, 1, 0]
+                }),
+                new RadiatorPart({
+                    pos: [-18, 16],
+                    size: [20, 20, 8],
+                    armorTiers: [1, 0, 0]
+                }),
+                new RadiatorPart({
+                    pos: [-18, -16],
+                    size: [20, 20, 8],
+                    armorTiers: [1, 0, 0]
+                }),
+                new ReactorPart({
+                    pos: [-22, 0],
+                    size: [12, 12, 8],
+                    powerGeneration: 10,
+                    heatGeneration: 20
                 }),
                 new EnginePart({
                     pos: [-30, 0],
@@ -72,57 +147,6 @@ class GameObjects {
                 })
             ]
         }),
-        new Ship({
-            team: "enemy",
-            parentName: "Moon",
-            startLocalPos: [6978090, 0],
-            startLocalVel: [0, 860],
-            thrust: 100000,
-            torque: 1000,
-            rot: 0,
-            angVel: 0.5,
-            mapSize: 50,
-            parts: [
-                new HullPart({
-                    pos: [28, 0],
-                    size: [6, 12, 20],
-                    armorTiers: [1, 1, 0]
-                }),
-                new TankPart({
-                    pos: [0, 0],
-                    size: [12, 12, 36],
-                    armorTiers: [1, 1, 0]
-                }),
-                new EnginePart({
-                    pos: [-22, 0],
-                    size: [4, 6, 8],
-                    thrust: 100000,
-                    isp: 750
-                }),
-                new RadiatorPart({
-                    pos: [-10, 16],
-                    size: [20, 20, 8],
-                    armorTiers: [1, 0, 0]
-                }),
-                new RadiatorPart({
-                    pos: [-10, -16],
-                    size: [20, 20, 8],
-                    armorTiers: [1, 0, 0]
-                }),
-                WeaponPresets.mg({
-                    pos: [10, 7],
-                    direction: 1
-                }),
-                WeaponPresets.mg({
-                    pos: [10, -7],
-                    direction: -1
-                }),
-                WeaponPresets.railgun({
-                    pos: [40, 0],
-                    direction: 0
-                })
-            ]
-        })
     ];
     static projectiles = [];
     static controllingObject = null;
@@ -249,9 +273,14 @@ class GameObjects {
     }
 
     static update(endTime, stepDt) {
-        this.ships = this.ships.filter(ship =>
-            this.updateObject(ship, endTime, stepDt)
-        );
+        this.ships = this.ships.filter(ship => {
+            ship.updateResources(stepDt);
+            if (!this.updateObject(ship, endTime, stepDt)) {
+                ship.destroy();
+                return false;
+            }
+            return true;
+        });
 
         this.projectiles = this.projectiles.filter(proj =>
             this.updateObject(proj, endTime, stepDt)

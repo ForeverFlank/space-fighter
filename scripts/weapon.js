@@ -7,8 +7,9 @@ class Weapon extends Part {
         super({
             partType: "Weapon",
             density: 100,
-            healthPerArea: 200,
-            hitChance: 0.01,
+            healthPerArea: 20,
+            hitChance: 0.2,
+            damageMultiplier: 0.5,
             ...opts
         });
     }

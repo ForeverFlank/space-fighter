@@ -4,31 +4,36 @@ import { Timewarp } from "./main.js";
 import { GameObjects } from "./game-objects.js";
 import { InputState } from "./input.js";
 import { formatDate, toDate } from "./time.js";
+import { getScreenPos, getScreenSize } from "./camera.js";
 
 // document.querySelectorAll(".toggle-btn").forEach(btn => {
 //     const color = btn.dataset.color;
 //     btn.style.setProperty("--btn-color", color);
 // });
 
-export function updateHUD(time) {
-    const ship = GameObjects.controllingObject;
+function updateUI(time) {
+    const currShip = GameObjects.controllingObject;
 
-    if (ship) {
+    if (currShip) {
         document.getElementById("ship-health").innerText =
-            "Health: " + Math.round(ship.getTotalHealth()) +
-            "/" + Math.round(ship.getMaxHealth());
+            "Health: " + Math.round(currShip.getTotalHealth()) +
+            "/" + Math.round(currShip.getMaxHealth());
 
         document.getElementById("ship-armor").innerText =
-            "Armor: " + Math.round(ship.getTotalArmor()) +
-            "/" + Math.round(ship.getMaxArmor());
+            "Armor: " + Math.round(currShip.getTotalArmor()) +
+            "/" + Math.round(currShip.getMaxArmor());
 
         document.getElementById("ship-power").innerText =
-            "Power: " + Math.round(ship.totalPower) +
-            "/" + Math.round(ship.maxPower);
+            "Power: " + Math.round(currShip.power) +
+            "/" + Math.round(currShip.maxPower);
 
         document.getElementById("ship-heat").innerText =
-            "Heat: " + Math.round(ship.totalHeat) +
-            "/" + Math.round(ship.maxHeat);
+            "Heat: " + Math.round(currShip.heat) +
+            "/" + Math.round(currShip.maxHeat);
+    }
+
+    for (const ship of GameObjects.ships) {
+        ship.updateUI();
     }
 
     // const days = Math.floor(time / 86400);
@@ -44,8 +49,10 @@ export function updateHUD(time) {
     } else {
         camButton.classList.remove("on");
     }
-    
+
     let currDate = toDate(time);
     document.getElementById("time").innerText = formatDate(currDate);
     document.getElementById("time-speed").innerText = Timewarp.speed + "x";
 }
+
+export { updateUI }

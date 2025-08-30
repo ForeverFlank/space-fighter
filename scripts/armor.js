@@ -11,9 +11,9 @@ class Armor {
             eff * massFactor(tiers[2]) * 200
         ];
         this.armorPerArea = [
-            eff * tiers[0] * 10,
-            eff * tiers[1] * 10,
-            eff * tiers[2] * 10,
+            eff * tiers[0] * 5,
+            eff * tiers[1] * 5,
+            eff * tiers[2] * 5,
         ]
         this.reduction = [
             eff * tiers[0] * 0.2,

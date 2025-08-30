@@ -2,7 +2,7 @@
 
 import { ctx, canvas, resizeCanvas, renderScene } from "./renderer.js";
 import { setupInput } from "./input.js";
-import { updateHUD } from "./hud.js";
+import { updateUI } from "./ui.js";
 import { Game } from "./game.js";
 import { J2000 } from "./time.js";
 import { updateCamera } from "./camera.js";
@@ -42,7 +42,7 @@ function loop() {
 
     Game.update(time, Timewarp.speed, dt);
     renderScene(ctx, canvas, time);
-    updateHUD(time);
+    updateUI(time);
 
     document.getElementById("fps").innerText = frameTime.toFixed(1) + " ms";
 

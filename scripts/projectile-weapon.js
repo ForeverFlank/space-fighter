@@ -14,6 +14,8 @@ class ProjectileWeapon extends Weapon {
         facing = 0,
         firingArc = twoPi,
         spreadAngle = 0,
+        powerUsage = 10,
+        heatGeneration = 10,
         ...opts
     }) {
         super({ ...opts });
@@ -28,6 +30,9 @@ class ProjectileWeapon extends Weapon {
         this.firingArc = firingArc;
         this.spreadAngle = spreadAngle;
         this.cooldown = 0;
+
+        this.powerUsage = powerUsage;
+        this.heatGeneration = heatGeneration;
     }
 
     fire(time, ship, targetWorldPos) {
@@ -71,8 +76,14 @@ class ProjectileWeapon extends Weapon {
         const recoil = [0, 0];
         const massRatio = projectile.mass / ship.getMass();
         vecMul(recoil, dir, this.projectileSpeed * massRatio);
-
         vecSub(ship.vel, ship.vel, recoil);
+
+        ship.heat += this.heatGeneration;
+        ship.power -= this.powerUsage;
+
+        if (ship.power < 0) {
+            ship.power = 0;
+        }
     }
 }
 

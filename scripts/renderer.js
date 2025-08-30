@@ -7,6 +7,8 @@ import { getScreenPos, getScreenSize } from "./camera.js";
 import { drawShipOsculatingOrbit } from "./trajectory-drawer.js";
 import { vecAdd, vecRotate, vecSub } from "./math.js";
 
+export const shipCloseupThresold = 10;
+
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -177,11 +179,11 @@ function renderShips(ctx) {
             10, getScreenSize(ship.mapSize)
         );
 
-        if (size > 10) {
+        if (size > shipCloseupThresold) {
             for (const part of ship.parts) {
                 const healthFraction = part.health / part.maxHealth;
                 ctx.strokeStyle = brightenColor(
-                    color, 0.5 + 0.5 * healthFraction
+                    color, 0.4 + 0.6 * healthFraction
                 );
 
                 const rotatedOffset = [0, 0];

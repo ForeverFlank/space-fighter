@@ -8,10 +8,11 @@ class Part {
         pos = [0, 0],
         size = [10, 10, 10],
         density = 100,
-        healthPerArea = 100,
+        healthPerArea = 50,
         armorTiers = [0, 0, 0],
         armorEffectivity = 1,
-        hitChance = 1
+        hitChance = 1,
+        damageMultiplier = 1
     }) {
         this.partType = partType;
         this.pos = pos;
@@ -43,6 +44,7 @@ class Part {
         this.armorReduction = [...this.armorConfig.reduction];
 
         this.hitChance = hitChance;
+        this.damageMultiplier = damageMultiplier;
     }
 
     getMass() {
@@ -54,8 +56,6 @@ class HullPart extends Part {
     constructor(opts = {}) {
         super({
             partType: "Hull",
-            density: 100,
-            healthPerArea: 100,
             ...opts
         });
     }
@@ -65,8 +65,6 @@ class ControlPart extends Part {
     constructor({ powerUsage = 10, ...opts }) {
         super({
             partType: "Control",
-            density: 100,
-            healthPerArea: 200,
             ...opts
         });
         this.powerUsage = powerUsage;
@@ -102,7 +100,6 @@ class EnginePart extends Part {
         super({
             partType: "Engine",
             density: 50,
-            healthPerArea: 50,
             armorEffectivity: 0.5,
             ...opts
         });
@@ -113,7 +110,7 @@ class EnginePart extends Part {
 
 class ReactorPart extends Part {
     constructor({
-        powerGeneration = 100,
+        powerGeneration = 10,
         heatGeneration = 10,
         powerStorage = 1000,
         ...opts
@@ -121,7 +118,6 @@ class ReactorPart extends Part {
         super({
             partType: "Reactor",
             density: 250,
-            healthPerArea: 100,
             ...opts
         });
         this.powerGeneration = powerGeneration;
@@ -132,7 +128,7 @@ class ReactorPart extends Part {
 
 class RadiatorPart extends Part {
     constructor({
-        dissipationPerArea = 10,
+        dissipationPerArea = 2,
         ...opts
     }) {
         super({
@@ -140,6 +136,7 @@ class RadiatorPart extends Part {
             density: 10,
             healthPerArea: 10,
             armorEffectivity: 0.1,
+            hitChance: 0.2,
             ...opts
         });
         this.maxDissipationRate = this.area * dissipationPerArea;

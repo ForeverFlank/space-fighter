@@ -1,6 +1,6 @@
 "use strict";
 
-import { vecAdd, vecDot, vecLengthSq, vecMul, vecNormalize, vecRotate, vecSub } from "./math.js";
+import { deg2Rad, vecAdd, vecDot, vecLengthSq, vecMul, vecNormalize, vecRotate, vecSub } from "./math.js";
 import { SolarSystem } from "./solar-system.js";
 
 function onSegment(p, q, r) {
@@ -45,58 +45,51 @@ function intersectInto(p0, p1, q0, q1) {
     return false;
 }
 
-function raycastRectangle(p0, p1, m, dir, part, hits) {
+function raycastRectanglePart(p0, p1, m, dir, part, hits) {
     const isRadiator = part.partType === "Radiator";
 
     const halfWidth = 0.5 * part.size[0];
     const halfHeight = 0.5 * part.size[2];
     const c = p0[1] - m * p0[0];
 
-    const topSideHit = intersectInto(p0, p1,
-        [-halfHeight, halfWidth],
-        [halfHeight, halfWidth],
-    );
-    const rightSideHit = intersectInto(p0, p1,
-        [halfHeight, halfWidth],
-        [halfHeight, -halfWidth],
-    );
-    const bottomSideHit = intersectInto(p0, p1,
-        [halfHeight, -halfWidth],
-        [-halfHeight, -halfWidth],
-    );
-    const leftSideHit = intersectInto(p0, p1,
-        [-halfHeight, -halfWidth],
-        [-halfHeight, halfWidth],
-    );
+    const q0 = [-halfHeight, halfWidth];
+    const q1 = [halfHeight, halfWidth];
+    const q2 = [halfHeight, -halfWidth];
+    const q3 = [-halfHeight, -halfWidth];
 
-    let x, y,  damageFactor;
-    if (topSideHit) {
+    const hitTop = intersectInto(p0, p1, q0, q1);
+    const hitRgh = intersectInto(p0, p1, q1, q2);
+    const hitBtm = intersectInto(p0, p1, q2, q3);
+    const hitLft = intersectInto(p0, p1, q3, q0);
+
+    let x, y, damageFactor;
+    if (hitTop) {
         y = halfWidth;
         x = (y - c) / m;
-        damageFactor = isRadiator ? 1 + dir[1] : -dir[1];
+        damageFactor = -dir[1];
         hits.push({ part, pos: [x, y], normal: [0, 1], damageFactor});
     }
-    if (bottomSideHit) {
+    if (hitBtm) {
         y = -halfWidth;
         x = (y - c) / m;
-        damageFactor = isRadiator ? 1 - dir[1] : dir[1];
+        damageFactor = dir[1];
         hits.push({ part, pos: [x, y], normal: [0, -1], damageFactor });
     }
-    if (leftSideHit) {
+    if (hitLft) {
         x = -halfHeight;
         y = m * x + c;
-        damageFactor = dir[0];
+        damageFactor = isRadiator ? 1 - dir[0] : dir[0];
         hits.push({ part, pos: [x, y], normal: [-1, 0], damageFactor });
     }
-    if (rightSideHit) {
+    if (hitRgh) {
         x = halfHeight
         y = m * x + c;
-        damageFactor = -dir[0];
+        damageFactor = isRadiator ? 1 + dir[0] : -dir[0];
         hits.push({ part, pos: [x, y], normal: [1, 0], damageFactor });
     }
 }
 
-function raycastTrapezoid(p0, p1, m, dir, part, hits) {
+function raycastTrapezoidPart(p0, p1, m, dir, part, hits) {
     const slope = 0.5 * (part.size[0] - part.size[1]) / part.size[2];
 
     const halfWidthRight = 0.5 * part.size[0];
@@ -116,13 +109,13 @@ function raycastTrapezoid(p0, p1, m, dir, part, hits) {
     const q2 = [halfHeight, -halfWidthRight];
     const q3 = [-halfHeight, -halfWidthLeft];
 
-    const topSideHit = intersectInto(p0, p1, q0, q1);
-    const rightSideHit = intersectInto(p0, p1, q1, q2);
-    const bottomSideHit = intersectInto(p0, p1, q2, q3);
-    const leftSideHit = intersectInto(p0, p1, q3, q0);
+    const hitTop = intersectInto(p0, p1, q0, q1);
+    const hitRgh = intersectInto(p0, p1, q1, q2);
+    const hitBtm = intersectInto(p0, p1, q2, q3);
+    const hitLft = intersectInto(p0, p1, q3, q0);
 
     let x, y, damageFactor;
-    if (topSideHit) {
+    if (hitTop) {
         const lhs = m - slope;
         const rhs = slope * halfHeight + halfWidthLeft - c;
         x = rhs / lhs;
@@ -135,7 +128,7 @@ function raycastTrapezoid(p0, p1, m, dir, part, hits) {
         vecMul(normal, normal, -1);
         hits.push({ part, pos: [x, y], normal, damageFactor });
     }
-    if (bottomSideHit) {
+    if (hitBtm) {
         const lhs = m + slope;
         const rhs = -slope * halfHeight - halfWidthLeft - c;
         x = rhs / lhs;
@@ -148,13 +141,13 @@ function raycastTrapezoid(p0, p1, m, dir, part, hits) {
         vecMul(normal, normal, -1);
         hits.push({ part, pos: [x, y], normal, damageFactor });
     }
-    if (leftSideHit) {
+    if (hitLft) {
         x = -halfHeight;
         y = m * x + c;
         damageFactor = dir[0];
         hits.push({ part, pos: [x, y], normal: [-1, 0], damageFactor });
     }
-    if (rightSideHit) {
+    if (hitRgh) {
         x = halfHeight
         y = m * x + c;
         damageFactor = -dir[0];
@@ -190,6 +183,7 @@ class Projectile {
         this.startTime = startTime;
         this.time = startTime;
         this.lifetime = lifetime;
+        this.toBeDestroyed = false;
     }
 
     getParent() {
@@ -202,27 +196,27 @@ class Projectile {
 
     raycast(ship) {
         const p0Orig = [0, 0], p1Orig = [0, 0];
-        const p0 = [0, 0], p1 = [0, 0];
         vecSub(p0Orig, this.lastPos, ship.lastPos);
         vecSub(p1Orig, this.pos, ship.pos);
         vecRotate(p0Orig, p0Orig, -ship.rot);
         vecRotate(p1Orig, p1Orig, -ship.rot);
-
+        
         const dir = [0, 0];
         vecSub(dir, p1Orig, p0Orig);
         vecNormalize(dir, dir);
 
         const hits = [];
         const m = (p1Orig[1] - p0Orig[1]) / (p1Orig[0] - p0Orig[0]);
-
+        
+        const p0 = [0, 0], p1 = [0, 0];
         for (const part of ship.parts) {
             vecSub(p0, p0Orig, part.pos);
             vecSub(p1, p1Orig, part.pos);
 
             if (part.size[0] === part.size[1]) {
-                raycastRectangle(p0, p1, m, dir, part, hits);
+                raycastRectanglePart(p0, p1, m, dir, part, hits);
             } else {
-                raycastTrapezoid(p0, p1, m, dir, part, hits);
+                raycastTrapezoidPart(p0, p1, m, dir, part, hits);
             }
         }
 
@@ -233,23 +227,7 @@ class Projectile {
             return vecLengthSq(d0) - vecLengthSq(d1);
         });
 
-        // console.log(hits.map(h => {
-        //     const x = [0, 0];
-        //     return vecLengthSq(vecSub(x, p0Orig, h.pos));
-        // }));
-        const finalHit = ship.applyProjectileDamages(this, hits);
-
-        if (finalHit !== null) {
-            const finalPos = [0, 0];
-            vecAdd(finalPos, finalHit.pos, finalHit.part.pos);
-            vecRotate(finalPos, finalPos, ship.rot);
-            vecAdd(finalPos, finalPos, ship.pos);
-
-            this.pos = finalPos;
-            return false;
-        }
-
-        return true;
+        ship.applyProjectileDamages(this, hits);
     }
 }
 

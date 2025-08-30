@@ -18,7 +18,35 @@ button:hover {
     background-color: #333;
 }
 
-.hud {
+.world-ui {
+    pointer-events: none;
+}
+
+.ship-ui {
+    transition: opacity 0.2s;
+    opacity: 0;
+    transform: translateX(-50%);
+}
+
+.ship-ui-health-bar {
+    margin-top: 10px;
+    width: 80px;
+    height: 6px;
+    background-color: #80808080
+}
+
+.ship-ui-health-bar-value {
+    width: 100%;
+    height: 100%;
+    background-color: white;
+}
+
+.ship-ui-health-text {
+    margin: 6px;
+    text-align: center;
+}
+
+.ui {
     position: absolute;
     width: 100%;
     top: 0;
@@ -32,18 +60,18 @@ button:hover {
     pointer-events: none;
 }
 
-.hud-left {
+.ui-left {
     display: flex;
     flex-direction: column;
     width: 15vw;
     row-gap: 0.5em;
 }
 
-.hud-left * {
+.ui-left * {
     margin: 0;
 }
 
-.hud-right {
+.ui-right {
     display: flex;
     flex-direction: column;
     align-items: end;
@@ -52,7 +80,7 @@ button:hover {
     row-gap: 0.5em;
 }
 
-.hud-right * {
+.ui-right * {
     margin: 0;
 }
 

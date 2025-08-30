@@ -1,7 +1,23 @@
 "use strict";
 
+import { getScreenPos, getScreenSize } from "./camera.js";
 import { vecAdd, vecDot, vecLengthSq, vecMul, vecRotate, vecSub } from "./math.js";
+import { shipCloseupThresold } from "./renderer.js";
 import { SolarSystem } from "./solar-system.js";
+
+function calculateRicochetChance(projectile, cosAngle, v2) {
+    const m = projectile.mass;
+    const p = projectile.penetration;
+
+    let angleFactor = 1 - cosAngle;
+    angleFactor *= angleFactor;
+    angleFactor = Math.tan(0.25 * Math.PI * angleFactor);
+    angleFactor *= angleFactor;
+
+    const velFactor = 1 + m * v2 * p / 2E+6;
+
+    return angleFactor ** velFactor;
+}
 
 class Ship {
     constructor({
@@ -41,7 +57,9 @@ class Ship {
         this.reactors = [];
         this.radiators = [];
         this.weapons = [];
-        
+
+        this.maxHealth = 0;
+
         for (const part of parts) {
             if (part.partType === "Engine") {
                 this.engines.push(part);
@@ -58,15 +76,38 @@ class Ship {
                 this.weapons.push(part);
             }
 
+            this.maxHealth += part.maxHealth;
             this.maxHeat += part.mass * 0.01;
         }
 
-        this.totalPower = this.maxPower;
-        this.totalHeat = 0;
+        this.power = this.maxPower;
+        this.heat = 0;
+
+        const containerUI = document.createElement("div");
+        containerUI.classList.add("ship-ui");
+
+        document.getElementById("world-ui").appendChild(containerUI);
+
+        this.containerUI = containerUI;
+
+        const healthBar = document.createElement("div");
+        healthBar.classList.add("ship-ui-health-bar");
+        containerUI.appendChild(healthBar);
+        this.healthBar = healthBar;
+
+        const healthBarValue = document.createElement("div");
+        healthBarValue.classList.add("ship-ui-health-bar-value");
+        healthBar.appendChild(healthBarValue);
+        this.healthBarValue = healthBarValue;
+
+        const healthText = document.createElement("p");
+        healthText.classList.add("ship-ui-health-text");
+        containerUI.appendChild(healthText);
+        this.healthText = healthText;
     }
 
-    updateResources(dt) {
-
+    destroy() {
+        this.containerUI.remove();
     }
 
     getParent() {
@@ -145,6 +186,61 @@ class Ship {
         return totalThrust / totalMassFlow;
     }
 
+    updateResources(dt) {
+        for (const reactor of this.reactors) {
+            if (reactor.health > 0) {
+                this.power += reactor.powerGeneration * dt;
+                this.heat += reactor.heatGeneration * dt;
+            }
+        }
+        for (const radiator of this.radiators) {
+            if (radiator.health > 0) {
+                this.heat -= radiator.getDissipationRate() * dt;
+            }
+        }
+
+        if (this.power < 0) {
+            this.power = 0;
+        }
+        if (this.power > this.maxPower) {
+            this.power = this.maxPower;
+        }
+
+        if (this.heat < 0) {
+            this.heat = 0;
+        }
+    }
+
+    updateUI() {
+        const screenPos = getScreenPos(this.pos);
+        const screenSize = getScreenSize(this.mapSize);
+
+        if (screenSize <= shipCloseupThresold) {
+            this.containerUI.style.opacity = "0";
+        } else {
+            this.containerUI.style.opacity = "1";
+        }
+
+        const x = screenPos[0];
+        const y = screenPos[1] + Math.max(
+            screenSize, shipCloseupThresold
+        );
+        this.containerUI.style.position = "absolute";
+        this.containerUI.style.left = x + "px";
+        this.containerUI.style.top = y + "px";
+
+        const totalHealth = this.getTotalHealth();
+        const maxHealth = this.maxHealth;
+        this.healthText.innerText = Math.round(
+            this.getTotalHealth()
+        );
+
+        this.healthBarValue.style.width = (
+            100 * totalHealth / maxHealth
+        ) + "%";
+
+    }
+
     fire(time, targetWorldPos) {
         for (const weapon of Object.values(this.weapons)) {
             if (!weapon.enabled) continue;
@@ -160,51 +256,56 @@ class Ship {
         const relVel = [0, 0];
         vecSub(relVel, projectile.vel, this.vel);
 
-        const energy = 0.0005 * projectile.mass * vecLengthSq(relVel);
+        const v2 = vecLengthSq(relVel);
+        const energy = 0.0005 * projectile.mass * v2;
 
         for (const hit of hits) {
             const part = hit.part;
 
-            // if (Math.random() < part.hitChance) continue;
+            if (Math.random() > part.hitChance) continue;
             if (hit.damageFactor <= 0) continue;
 
-            
-            const damage = energy * hit.damageFactor;
+            const damage = energy * hit.damageFactor * part.damageMultiplier;
             const applied = damage * (1 - part.armorReduction[0]);
             part.armor[0] -= damage - applied;
             part.health -= applied;
             projectile.penetration -= damage;
 
-            if (part.partType !== "Radiator") {
+            if (part.armor[0] < 0) part.armor[0] = 0;
+            if (part.health < 0) part.health = 0;
+            if (projectile.penetration <= 0) {
+                const hitPos = [0, 0];
+                vecAdd(hitPos, hit.pos, hit.part.pos);
+                vecRotate(hitPos, hitPos, this.rot);
+                vecAdd(hitPos, hitPos, this.pos);
+
+                projectile.pos = hitPos;
+                projectile.toBeDestroyed = true;
+                break;
+            }
+
+            if (part.partType !== "Radiator" &&
+                Math.random() < calculateRicochetChance(
+                    projectile, hit.damageFactor, v2
+                )) {
                 const normal = hit.normal;
                 vecRotate(normal, normal, this.rot);
 
-                const relVel = [0, 0], rhs = [0, 0];
-                vecSub(relVel, projectile.vel, this.vel);
+                const bouncedVel = [0, 0], rhs = [0, 0];
                 vecMul(rhs, normal, 2 * vecDot(relVel, normal));
-                vecSub(relVel, relVel, rhs);
-                vecAdd(relVel, relVel, this.vel);
+                vecSub(bouncedVel, projectile.vel, this.vel);
+                vecSub(bouncedVel, bouncedVel, rhs);
+                vecAdd(bouncedVel, bouncedVel, this.vel);
 
                 const hitPos = [0, 0];
                 vecAdd(hitPos, hit.pos, hit.part.pos);
                 vecRotate(hitPos, hitPos, this.rot);
                 vecAdd(hitPos, hitPos, this.pos);
-                
-                projectile.pos = hitPos;
-                projectile.vel = relVel;
-            }
-            
-            if (part.armor[0] < 0) part.armor[0] = 0;
-            if (part.health < 0) part.health = 0;
-            // if (projectile.penetration < 0) {
-            //     return {
-            //         part: part,
-            //         pos: hit.pos
-            //     };
-            // }
-        }
 
-        return null;
+                projectile.pos = hitPos;
+                projectile.vel = bouncedVel;
+            }
+        }
     }
 }
 

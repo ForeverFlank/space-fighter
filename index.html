@@ -14,15 +14,16 @@
 
 <body style="margin: 0; overflow: hidden; background-color: black;">
     <canvas id="canvas" width="500" height="500" style="z-index: -10;"></canvas>
-    <div class="hud">
+    <div id="world-ui" class="world-ui"></div>
+    <div class="ui">
         <div class="pad">
-            <div class="hud-left">
+            <div class="ui-left">
                 <p id="ship-health"></p>
                 <p id="ship-armor"></p>
                 <p id="ship-power"></p>
                 <p id="ship-heat"></p>
             </div>
-            <div class="hud-right">
+            <div class="ui-right">
                 <p id="time"></p>
                 <p id="time-speed"></p>
                 <p id="fps"></p>
