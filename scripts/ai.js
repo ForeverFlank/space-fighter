@@ -8,12 +8,19 @@ class AI {
         this.ship = ship;
         this.status = "idle";
 
-        this.engageDistance = 1_000_000;
+        this.engageDistance = 250_000;
         this.farDistance = 100_000;
-        this.nearDistance = 10_000;
+        this.nearDistance = 50_000;
     }
 
     updateCombat() {
+        if (this.ship.weapons.every(w => w.health <= 0)) {
+            this.status = "idle";
+            this.ship.targets = [];
+            this.ship.turning = 0;
+            return;
+        }
+
         let targetShip = null, minDist = Infinity;
 
         for (const otherShip of GameObjects.ships) {
@@ -29,16 +36,18 @@ class AI {
             }
         }
 
-        this.ship.enabledWeapons["sniper"] = minDist < this.engageDistance;
-        this.ship.enabledWeapons["cannon"] = minDist < this.farDistance;
-        this.ship.enabledWeapons["mg"] = minDist < this.nearDistance;
+        this.ship.enabledWeapons["sniper"] = true;
+        this.ship.enabledWeapons["cannon"] = true;
+        this.ship.enabledWeapons["mg"] = true;
 
         if (targetShip === null) {
-            this.ship.targets = []
+            this.status = "idle";
+            this.ship.targets = [];
             this.ship.turning = 0;
             return;
         }
 
+        this.status = "engaged";
         this.ship.targets = [
             { pos: targetShip.pos, vel: targetShip.vel }
         ];

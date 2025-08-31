@@ -6,6 +6,7 @@ import { updateUI } from "./ui.js";
 import { Game } from "./game.js";
 import { J2000 } from "./time.js";
 import { updateCamera } from "./camera.js";
+import { Levels } from "./levels.js";
 
 const startDate = new Date(Date.UTC(2053, 7, 25, 12, 0, 0))
 let time = (startDate.getTime() - J2000.getTime()) / 1000;
@@ -27,10 +28,14 @@ document.addEventListener('contextmenu', (e) =>
 );
 
 function start() {
+    Game.init();
+    Game.loadLevel(Levels[0]);
     Game.start(time);
+
     setupInput(canvas);
     resizeCanvas();
     updateCamera(time);
+
     requestAnimationFrame(loop);
 }
 

@@ -1,6 +1,7 @@
 "use strict";
 
 import { GameObjects } from "./game-objects.js";
+import { Game } from "./game.js";
 import { Timewarp } from "./main.js";
 
 export const InputState = {

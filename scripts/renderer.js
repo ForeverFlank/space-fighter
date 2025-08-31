@@ -235,22 +235,27 @@ function renderShips(ctx) {
 }
 
 function renderProjectiles(ctx) {
-    const projectileCount = GameObjects.projectiles.length;
-    const renderChance =
-        projectileCount < maxVisibleProjectiles
-        ? 1 : maxVisibleProjectiles / projectileCount;
+    // const projectileCount = GameObjects.projectiles.length;
+    // const renderChance =
+    //     projectileCount < maxVisibleProjectiles
+    //     ? 1 : maxVisibleProjectiles / projectileCount;
 
     for (const proj of GameObjects.projectiles) {
-        if (Math.random() > renderChance) continue;
-
         const screenPos = getScreenPos(proj.pos);
 
         if (proj.prevScreenPos === undefined) {
             proj.prevScreenPos = screenPos;
         }
-        const direction = [0, 0], startPos = [0, 0];
-        vecSub(direction, screenPos, proj.prevScreenPos);
-        vecSub(startPos, screenPos, direction);
+        const prevScreenPos = proj.prevScreenPos;
+
+        if (
+            (prevScreenPos[0] < 0 || prevScreenPos[0] > canvas.width || prevScreenPos[1] < 0 || prevScreenPos[1] > canvas.height) &&
+            (screenPos[0] < 0 || screenPos[0] > canvas.width || screenPos[1] < 0 || screenPos[1] > canvas.height)
+        ) {
+            proj.prevScreenPos = screenPos;
+            continue;
+        }
+
 
         ctx.fillStyle = proj.color;
         ctx.strokeStyle = proj.color;
@@ -260,7 +265,7 @@ function renderProjectiles(ctx) {
         ctx.lineWidth = 2;
 
         ctx.beginPath();
-        ctx.moveTo(...startPos);
+        ctx.moveTo(...prevScreenPos);
         ctx.lineTo(...screenPos);
         ctx.stroke();
 
@@ -269,8 +274,8 @@ function renderProjectiles(ctx) {
         ctx.arc(
             screenPos[0],
             screenPos[1],
-            1,
-            0, 2 * Math.PI);
+            1, 0, 2 * Math.PI
+        );
         ctx.fill();
 
         proj.prevScreenPos = screenPos;

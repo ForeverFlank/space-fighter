@@ -340,7 +340,16 @@ class Ship {
 
             const damage = energy * hit.damageFactor * part.damageMultiplier;
             const applied = damage * (1 - part.armorReduction[0]);
-            part.armor[0] -= damage - applied;
+            const armorDamage = damage - applied;
+            const totalArmor =
+                part.armor[0] +
+                part.armor[1] +
+                part.armor[2];
+            if (totalArmor > 0) {
+                part.armor[0] -= armorDamage * part.armor[0] / totalArmor;
+                part.armor[1] -= armorDamage * part.armor[1] / totalArmor;
+                part.armor[2] -= armorDamage * part.armor[2] / totalArmor;
+            }
             part.health -= applied;
 
             const ricochetChance = calculateRicochetChance(

@@ -92,24 +92,39 @@ const planets = [
 ];
 
 class Game {
-    static start(time = 0) {
+    static init() {
         for (const planet of planets) {
             SolarSystem.addPlanet(new Planet(planet));
         }
+    }
 
+    static loadLevel(level) {
+        this.level = level;
+
+        GameObjects.ships = level.ships;
+    }
+
+    static start(time = 0) {
         SolarSystem.init(time);
         GameObjects.init(time);
 
-        setCamScale(5);
-        setFocusTarget(GameObjects.ships[1]);
+        setCamScale(50000);
+        setFocusTarget(GameObjects.ships[this.level.focusTarget]);
     }
 
     static update(time, timeSpeed) {
         SolarSystem.updatePlanetPositions(time);
 
+        if (!Game.canFastTimewarp() && 
+            Timewarp.index > Timewarp.maxPhysicsTimewarpIndex) {
+            Timewarp.index = Timewarp.maxPhysicsTimewarpIndex;
+            Timewarp.speed = Timewarp.options[Timewarp.index];
+        }
+
         let stepDt = 1 / 60;
         if (timeSpeed >= 2) stepDt = 1 / 30;
-        if (timeSpeed >= 10) stepDt = 1 / 10;
+        if (timeSpeed >= 5) stepDt = 1 / 12;
+        if (timeSpeed >= 10) stepDt = 1 / 6;
         if (timeSpeed >= 1_000) stepDt = 1;
         if (timeSpeed >= 10_000) stepDt = 10;
 
@@ -120,9 +135,9 @@ class Game {
         currShip.turning += InputState.turning;
         if (currShip.turning < -1) currShip.turning = -1;
         if (currShip.turning > 1) currShip.turning = 1;
-        
+
         GameObjects.update(time, stepDt);
-        
+
         updateCamera(time);
 
         currShip.turning = 0;
@@ -142,6 +157,15 @@ class Game {
         this.raycastProjectiles();
         this.updateShipAI();
         this.updateShipFiring(time);
+    }
+
+    static canFastTimewarp() {
+        for (const ship of GameObjects.ships) {
+            if (ship.ai.status !== "idle") {
+                return false;
+            }
+        }
+        return true;
     }
 
     static updateShipAI() {
