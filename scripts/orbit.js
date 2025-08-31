@@ -143,6 +143,13 @@ class Orbit {
         return sma * (1 - e * e) / (1 + e * Math.cos(f));
     }
 
+    static getPeriod(sma, mu) {
+        if (sma < 0) {
+            return twoPi * Math.sqrt(-sma * sma * sma / mu);
+        }
+        return twoPi * Math.sqrt(sma * sma * sma / mu);
+    }
+
     static getPositionFromTrueAnomaly(orbit, f) {
         const { sma, e, arg, direction } = orbit;
 
@@ -152,20 +159,19 @@ class Orbit {
         const out = [0, 0];
         return vecFromPolar(out, r, trueAngle);
     }
-
+    
     static getVelocityFromTrueAnomaly(orbit, mu, f) {
-        const { sma, e } = orbit;
-
+        const { sma, e, arg, direction } = orbit;
+        
         const p = sma * (1 - e * e);
         const sqrtMuOverP = Math.sqrt(mu / p);
+        const trueAngle = direction * f + arg;
 
         const vr = sqrtMuOverP * e * Math.sin(f);
         const vtheta = sqrtMuOverP * (1 + e * Math.cos(f));
 
-        const vx = vr * Math.cos(f) - vtheta * Math.sin(f);
-        const vy = vr * Math.sin(f) + vtheta * Math.cos(f);
-
-        return [vx, vy];
+        const out = [0, 0]
+        return vecRotate(out, [vr, vtheta], trueAngle);
     }
 
     static getTrueAnomalyFromTime(orbit, mu, time) {

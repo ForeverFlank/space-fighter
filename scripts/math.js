@@ -11,6 +11,18 @@ function vecLengthSq(vec) {
     return vec[0] * vec[0] + vec[1] * vec[1];
 }
 
+function vecDistance(a, b) {
+    const x = a[0] - b[0];
+    const y = a[1] - b[1];
+    return Math.sqrt(x * x + y * y);
+}
+
+function vecDistanceSq(a, b) {
+    const x = a[0] - b[0];
+    const y = a[1] - b[1];
+    return x * x + y * y;
+}
+
 function vecNormalize(out, vec) {
     const len = vecLength(vec);
     if (len === 0) {
@@ -97,7 +109,9 @@ function solveBisection(
 
 export {
     twoPi, deg2Rad,
-    vecLength, vecLengthSq, vecNormalize,
+    vecLength, vecLengthSq,
+    vecDistance, vecDistanceSq,
+    vecNormalize,
     vecAdd, vecSub, vecMul, vecMulAdd,
     vecFromPolar, vecRotate, vecDot,
     solveBisection

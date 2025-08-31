@@ -1,3 +1,5 @@
+"use strict";
+
 const J2000 = new Date(Date.UTC(2000, 0, 1, 12, 0, 0));
 
 function toDate(time) {

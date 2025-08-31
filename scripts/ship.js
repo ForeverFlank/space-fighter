@@ -1,7 +1,8 @@
 "use strict";
 
+import { AI } from "./ai.js";
 import { getScreenPos, getScreenSize } from "./camera.js";
-import { vecAdd, vecDot, vecLengthSq, vecMul, vecRotate, vecSub } from "./math.js";
+import { vecAdd, vecDot, vecFromPolar, vecLengthSq, vecMul, vecRotate, vecSub } from "./math.js";
 import { shipCloseupThresold } from "./renderer.js";
 import { SolarSystem } from "./solar-system.js";
 
@@ -12,11 +13,11 @@ function calculateRicochetChance(projectile, cosAngle, v2) {
     let angleFactor = 1 - cosAngle;
     angleFactor *= angleFactor;
     angleFactor = Math.tan(0.25 * Math.PI * angleFactor);
-    angleFactor *= angleFactor;
 
-    const velFactor = 1 + m * v2 * p / 2E+6;
+    const velFactor = 1 + m * v2 * p / 2E+7;
+    const res = angleFactor ** velFactor;
 
-    return angleFactor ** velFactor;
+    return res;
 }
 
 function displayNumber(num) {
@@ -38,11 +39,11 @@ class Ship {
         parentName = null,
         startLocalPos = [0, 0],
         startLocalVel = [0, 0],
+        size = 100,
         torque = 0,
         rot = 0.5 * Math.PI,
         angVel = 0,
-        parts = [],
-        mapSize = 100
+        parts = []
     } = {}) {
         this.type = "ship";
         this.team = team;
@@ -50,12 +51,13 @@ class Ship {
         this.localPos = startLocalPos;
         this.localVel = startLocalVel;
         this.parentName = parentName;
-        this.mapSize = mapSize;
+        this.size = size;
         this.parts = parts;
-        
+
         this.throttle = 0;
         this.sas = true;
-        
+        this.turning = 0;
+
         this.rot = rot;
         this.angVel = angVel;
         this.torque = torque;
@@ -68,7 +70,7 @@ class Ship {
         this.reactors = [];
         this.radiators = [];
         this.weapons = [];
-        
+
         this.enabledWeapons = {
             "mg": false,
             "cannon": false,
@@ -91,11 +93,14 @@ class Ship {
             }
 
             this.maxHealth += part.maxHealth;
-            this.maxHeat += part.mass * 0.01;
+            this.maxHeat += part.mass * 0.001;
         }
 
         this.power = this.maxPower;
         this.heat = 0;
+
+        this.ai = new AI(this);
+        this.targets = [];
 
         const containerUI = document.createElement("div");
         containerUI.classList.add("ship-ui");
@@ -213,6 +218,25 @@ class Ship {
         return totalThrust / totalMassFlow;
     }
 
+    updatePhysics(dt) {
+        let turning = 0;
+        const torque = this.torque;
+        const inertia = this.getInertia();
+        if (this.turning != 0) {
+            turning = this.turning;
+        } else if (this.sas) {
+            turning = -this.angVel * inertia / torque / dt;
+        }
+        turning = Math.max(-1, Math.min(turning, 1));
+        const angAccel = turning * torque / inertia;
+        this.angVel += angAccel * dt;
+
+        const accel = this.throttle * this.getThrust() / this.getMass();
+        const dv = [0, 0];
+        vecFromPolar(dv, accel * dt, this.rot);
+        vecAdd(this.vel, this.vel, dv);
+    }
+
     updateResources(dt) {
         for (const reactor of this.reactors) {
             if (reactor.health > 0) {
@@ -220,7 +244,7 @@ class Ship {
                 this.heat += reactor.heatGeneration * dt;
             }
         }
-        
+
         for (const radiator of this.radiators) {
             if (radiator.health > 0) {
                 this.heat -= radiator.getDissipationRate() * dt;
@@ -241,7 +265,7 @@ class Ship {
 
     updateUI() {
         const screenPos = getScreenPos(this.pos);
-        const screenSize = getScreenSize(this.mapSize);
+        const screenSize = getScreenSize(this.size);
 
         if (screenSize <= shipCloseupThresold) {
             this.containerUI.style.opacity = "0";
@@ -252,7 +276,7 @@ class Ship {
         const x = screenPos[0];
         const y = screenPos[1] + Math.max(
             screenSize, shipCloseupThresold
-        );
+        ) / 2;
         this.containerUI.style.position = "fixed";
         this.containerUI.style.left = x + "px";
         this.containerUI.style.top = y + "px";
@@ -285,15 +309,16 @@ class Ship {
             "⛊ " + displayNumber(totalArmor);
     }
 
-    fire(time, targetWorldPos) {
+    fire(time) {
         for (const weapon of this.weapons) {
-            if (!this.enabledWeapons[weapon.weaponClass]) {
-                continue;
-            }
+            if (!this.enabledWeapons[weapon.weaponClass]) continue;
+
+            if (weapon.powerUsage > this.power) continue;
 
             weapon.fire(
                 time, this,
-                targetWorldPos
+                this.targets[0].pos,
+                this.targets[0].vel
             );
         }
     }
@@ -308,6 +333,8 @@ class Ship {
         for (const hit of hits) {
             const part = hit.part;
 
+            if (part.health <= 0) continue;
+
             if (Math.random() > part.hitChance) continue;
             if (hit.damageFactor <= 0) continue;
 
@@ -315,25 +342,13 @@ class Ship {
             const applied = damage * (1 - part.armorReduction[0]);
             part.armor[0] -= damage - applied;
             part.health -= applied;
-            projectile.penetration -= damage;
 
-            if (part.armor[0] < 0) part.armor[0] = 0;
-            if (part.health < 0) part.health = 0;
-            if (projectile.penetration <= 0) {
-                const hitPos = [0, 0];
-                vecAdd(hitPos, hit.pos, hit.part.pos);
-                vecRotate(hitPos, hitPos, this.rot);
-                vecAdd(hitPos, hitPos, this.pos);
-
-                projectile.pos = hitPos;
-                projectile.toBeDestroyed = true;
-                break;
-            }
+            const ricochetChance = calculateRicochetChance(
+                projectile, hit.damageFactor, v2
+            );
 
             if (part.partType !== "Radiator" &&
-                Math.random() < calculateRicochetChance(
-                    projectile, hit.damageFactor, v2
-                )) {
+                Math.random() < ricochetChance) {
                 const normal = hit.normal;
                 vecRotate(normal, normal, this.rot);
 
@@ -350,6 +365,21 @@ class Ship {
 
                 projectile.pos = hitPos;
                 projectile.vel = bouncedVel;
+            }
+
+            projectile.penetration -= damage;
+
+            if (part.armor[0] < 0) part.armor[0] = 0;
+            if (part.health < 0) part.health = 0;
+            if (projectile.penetration <= 0) {
+                const hitPos = [0, 0];
+                vecAdd(hitPos, hit.pos, hit.part.pos);
+                vecRotate(hitPos, hitPos, this.rot);
+                vecAdd(hitPos, hitPos, this.pos);
+
+                projectile.pos = hitPos;
+                projectile.toBeDestroyed = true;
+                break;
             }
         }
     }

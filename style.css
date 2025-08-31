@@ -34,7 +34,7 @@ button:hover {
 
 .ship-ui-health-bar {
     margin-top: 10px;
-    width: 96px;
+    width: 80px;
     height: 6px;
     background-color: #80808080
 }
@@ -46,7 +46,7 @@ button:hover {
 }
 
 .ship-ui-armor-bar {
-    width: 96px;
+    width: 80px;
     height: 4px;
     background-color: #80808080
 }
@@ -63,13 +63,6 @@ button:hover {
     text-wrap-mode: nowrap;
 }
 
-.ui {
-    position: absolute;
-    width: 100%;
-    top: 0;
-    pointer-events: none;
-}
-
 .pad {
     display: flex;
     justify-content: space-between;
@@ -77,27 +70,34 @@ button:hover {
     pointer-events: none;
 }
 
-.ui-left {
+.top-ui {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    pointer-events: none;
+}
+
+.top-ui-left {
     display: flex;
     flex-direction: column;
-    width: 15vw;
+    width: 25vw;
     row-gap: 0.5em;
 }
 
-.ui-left * {
+.top-ui-left * {
     margin: 0;
 }
 
-.ui-right {
+.top-ui-right {
     display: flex;
     flex-direction: column;
     align-items: end;
     right: 0;
-    width: 15vw;
+    width: 25vw;
     row-gap: 0.5em;
 }
 
-.ui-right * {
+.top-ui-right * {
     margin: 0;
 }
 
@@ -107,6 +107,7 @@ button:hover {
     width: 100%;
     transform: translateX(-50%);
     bottom: 10px;
+    z-index: 10;
 
     display: flex;
     justify-content: center;
@@ -143,4 +144,26 @@ button:hover {
 .blend-difference {
     color: var(--btn-color);
     mix-blend-mode: difference;
+}
+
+.scale-bar-ui {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: end;
+    position: fixed;
+    bottom: 1em;
+    right: 1em;
+    pointer-events: none;
+}
+
+#scale-bar {
+    width: 100px;
+    height: 5px;
+    background-color: white;
+}
+
+#scale-value {
+    text-align: right;
+    margin-bottom: 0;
 }

@@ -1,163 +1,179 @@
 "use strict";
 
-import { deg2Rad, twoPi, vecAdd, vecLengthSq, vecSub } from "./math.js";
+import { twoPi, vecAdd, vecLengthSq, vecSub } from "./math.js";
 import { Ship } from "./ship.js";
 import { SolarSystem } from "./solar-system.js";
 import { step4thOrderSymplectic, stepSemiImplicitEuler } from "./integrator.js";
 import { WeaponPresets } from "./weapon-presets.js";
 import { ControlPart, EnginePart, HullPart, RadiatorPart, ReactorPart, TankPart } from "./part.js";
 
+const ships = [
+    new Ship({
+        team: "Allies",
+        parentName: "Moon",
+        startLocalPos: [4800000, 0],
+        startLocalVel: [0, 1020],
+        torque: 1000,
+        size: 100,
+        rot: 0,
+        parts: [
+            new HullPart({
+                pos: [40, 0],
+                size: [8, 16, 20],
+                armorTiers: [2, 1, 0]
+            }),
+            new ControlPart({
+                pos: [25, 0],
+                size: [16, 16, 10],
+                armorTiers: [2, 1, 0]
+            }),
+            new TankPart({
+                pos: [0, 0],
+                size: [16, 16, 40],
+                armorTiers: [2, 1, 0]
+            }),
+            new RadiatorPart({
+                pos: [-20, 18],
+                size: [20, 20, 8],
+                armorTiers: [1, 0, 0]
+            }),
+            new RadiatorPart({
+                pos: [-20, -18],
+                size: [20, 20, 8],
+                armorTiers: [1, 0, 0]
+            }),
+            new ReactorPart({
+                pos: [-25, 0],
+                size: [16, 16, 10]
+            }),
+            new EnginePart({
+                pos: [-34, 0],
+                size: [4, 6, 8],
+                thrust: 225_000,
+                isp: 750
+            }),
+            WeaponPresets.mg({
+                pos: [15, 9],
+                direction: 1,
+                armorTiers: [2, 0, 0]
+            }),
+            WeaponPresets.mg({
+                pos: [15, -9],
+                direction: -1,
+                armorTiers: [2, 0, 0]
+            }),
+            WeaponPresets.cannon({
+                pos: [52, 2],
+                direction: 0,
+                armorTiers: [2, 0, 0]
+            }),
+            WeaponPresets.cannon({
+                pos: [52, -2],
+                direction: 0,
+                armorTiers: [2, 0, 0]
+            }),
+            WeaponPresets.sniper({
+                pos: [0, 9],
+                direction: 0,
+                armorTiers: [2, 0, 0]
+            }),
+            WeaponPresets.sniper({
+                pos: [0, -9],
+                direction: 0,
+                armorTiers: [2, 0, 0]
+            })
+        ]
+    }),
+    new Ship({
+        team: "Enemies",
+        parentName: "Moon",
+        // startLocalPos: [-5000000, 6400000],
+        // startLocalVel: [-680, -440],
+        startLocalPos: [4800500, -1500],
+        startLocalVel: [10, 1150],
+        torque: 1000,
+        size: 100,
+        rot: 0,
+        parts: [
+            new HullPart({
+                pos: [40, 0],
+                size: [8, 16, 20],
+                armorTiers: [2, 1, 0]
+            }),
+            new ControlPart({
+                pos: [25, 0],
+                size: [16, 16, 10],
+                armorTiers: [2, 1, 0]
+            }),
+            new TankPart({
+                pos: [0, 0],
+                size: [16, 16, 40],
+                armorTiers: [2, 1, 0]
+            }),
+            new RadiatorPart({
+                pos: [-20, 18],
+                size: [20, 20, 8],
+                armorTiers: [1, 0, 0]
+            }),
+            new RadiatorPart({
+                pos: [-20, -18],
+                size: [20, 20, 8],
+                armorTiers: [1, 0, 0]
+            }),
+            new ReactorPart({
+                pos: [-25, 0],
+                size: [16, 16, 10]
+            }),
+            new EnginePart({
+                pos: [-34, 0],
+                size: [4, 6, 8],
+                thrust: 225_000,
+                isp: 750
+            }),
+            WeaponPresets.mg({
+                pos: [15, 9],
+                direction: 1,
+                armorTiers: [2, 0, 0]
+            }),
+            WeaponPresets.mg({
+                pos: [15, -9],
+                direction: -1,
+                armorTiers: [2, 0, 0]
+            }),
+            // WeaponPresets.cannon({
+            //     pos: [52, 2],
+            //     direction: 0,
+            //     armorTiers: [2, 0, 0]
+            // }),
+            // WeaponPresets.cannon({
+            //     pos: [52, -2],
+            //     direction: 0,
+            //     armorTiers: [2, 0, 0]
+            // }),
+            // WeaponPresets.sniper({
+            //     pos: [0, 9],
+            //     direction: 0,
+            //     armorTiers: [2, 0, 0]
+            // }),
+            // WeaponPresets.sniper({
+            //     pos: [0, -9],
+            //     direction: 0,
+            //     armorTiers: [2, 0, 0]
+            // })
+        ]
+    }),
+];
+
 class GameObjects {
-    static ships = [
-        new Ship({
-            team: "ally",
-            parentName: "Moon",
-            startLocalPos: [4500000, 0],
-            startLocalVel: [0, 1050],
-            thrust: 100000,
-            torque: 1000,
-            mapSize: 40,
-            rot: 0,
-            parts: [
-                new HullPart({
-                    pos: [28, 0],
-                    size: [6, 12, 20],
-                    armorTiers: [2, 1, 0]
-                }),
-                new ControlPart({
-                    pos: [14, 0],
-                    size: [12, 12, 8],
-                    armorTiers: [2, 1, 0]
-                }),
-                new TankPart({
-                    pos: [-4, 0],
-                    size: [12, 12, 28],
-                    armorTiers: [2, 1, 0]
-                }),
-                new RadiatorPart({
-                    pos: [-18, 16],
-                    size: [20, 20, 8],
-                    armorTiers: [1, 0, 0]
-                }),
-                new RadiatorPart({
-                    pos: [-18, -16],
-                    size: [20, 20, 8],
-                    armorTiers: [1, 0, 0]
-                }),
-                new ReactorPart({
-                    pos: [-22, 0],
-                    size: [12, 12, 8]
-                }),
-                new EnginePart({
-                    pos: [-30, 0],
-                    size: [4, 6, 8],
-                    thrust: 100000,
-                    isp: 750
-                }),
-                WeaponPresets.mg({
-                    pos: [6, 7],
-                    direction: 1,
-                    armorTiers: [2, 0, 0]
-                }),
-                WeaponPresets.mg({
-                    pos: [6, -7],
-                    direction: -1,
-                    armorTiers: [2, 0, 0]
-                }),
-                WeaponPresets.cannon({
-                    pos: [40, 0],
-                    direction: 0,
-                    armorTiers: [2, 0, 0]
-                }),
-                WeaponPresets.sniper({
-                    pos: [-4, 7],
-                    direction: 0,
-                    armorTiers: [2, 0, 0]
-                }),
-                WeaponPresets.sniper({
-                    pos: [-4, -7],
-                    direction: 0,
-                    armorTiers: [2, 0, 0]
-                })
-            ]
-        }),
-        new Ship({
-            team: "enemy",
-            parentName: "Moon",
-            startLocalPos: [6000000, 0],
-            startLocalVel: [50, 900],
-            thrust: 100000,
-            torque: 1000,
-            mapSize: 40,
-            rot: 0,
-            parts: [
-                new HullPart({
-                    pos: [28, 0],
-                    size: [6, 12, 20],
-                    armorTiers: [2, 1, 0]
-                }),
-                new ControlPart({
-                    pos: [14, 0],
-                    size: [12, 12, 8],
-                    armorTiers: [2, 1, 0]
-                }),
-                new TankPart({
-                    pos: [-4, 0],
-                    size: [12, 12, 28],
-                    armorTiers: [2, 1, 0]
-                }),
-                new RadiatorPart({
-                    pos: [-18, 16],
-                    size: [20, 20, 8],
-                    armorTiers: [1, 0, 0]
-                }),
-                new RadiatorPart({
-                    pos: [-18, -16],
-                    size: [20, 20, 8],
-                    armorTiers: [1, 0, 0]
-                }),
-                new ReactorPart({
-                    pos: [-22, 0],
-                    size: [12, 12, 8]
-                }),
-                new EnginePart({
-                    pos: [-30, 0],
-                    size: [4, 6, 8],
-                    thrust: 100000,
-                    isp: 750
-                }),
-                WeaponPresets.mg({
-                    pos: [6, 7],
-                    direction: 1,
-                    armorTiers: [2, 0, 0]
-                }),
-                WeaponPresets.mg({
-                    pos: [6, -7],
-                    direction: -1,
-                    armorTiers: [2, 0, 0]
-                }),
-                WeaponPresets.cannon({
-                    pos: [40, 0],
-                    direction: 0,
-                    armorTiers: [2, 0, 0]
-                }),
-                WeaponPresets.sniper({
-                    pos: [-4, 7],
-                    direction: 0,
-                    armorTiers: [2, 0, 0]
-                }),
-                WeaponPresets.sniper({
-                    pos: [-4, -7],
-                    direction: 0,
-                    armorTiers: [2, 0, 0]
-                })
-            ]
-        }),
-    ];
+    static ships = [];
     static projectiles = [];
     static controllingShip = null;
 
     static init(time = 0) {
+        for (const ship of ships) {
+            this.ships.push(ship);
+        }
+
         this.ships.forEach(obj => {
             const parentPos = SolarSystem.getPlanetPositionAtTime(
                 obj.getParent(), time
@@ -280,6 +296,7 @@ class GameObjects {
 
     static update(endTime, stepDt) {
         this.ships = this.ships.filter(ship => {
+            ship.updatePhysics(stepDt);
             ship.updateResources(stepDt);
             if (!this.updateObject(ship, endTime, stepDt)) {
                 ship.destroy();

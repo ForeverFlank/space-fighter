@@ -11,14 +11,14 @@ class Armor {
             eff * massFactor(tiers[2]) * 25
         ];
         this.armorPerArea = [
-            eff * tiers[0] * 10,
-            eff * tiers[1] * 5,
-            eff * tiers[2] * 2,
+            eff * tiers[0] * 20,
+            eff * tiers[1] * 10,
+            eff * tiers[2] * 5,
         ]
         this.reduction = [
-            eff * tiers[0] * 0.2,
-            eff * tiers[1] * 0.2,
-            eff * tiers[2] * 0.2,
+            eff * (1 - 2 ** -tiers[0]),
+            eff * (1 - 2 ** -tiers[1]),
+            eff * (1 - 2 ** -tiers[2]),
         ];
     }
 }

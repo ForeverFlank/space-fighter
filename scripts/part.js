@@ -8,7 +8,7 @@ class Part {
         pos = [0, 0],
         size = [10, 10, 10],
         density = 100,
-        healthPerArea = 50,
+        healthPerArea = 100,
         armorTiers = [0, 0, 0],
         armorEffectivity = 1,
         hitChance = 1,
@@ -62,7 +62,7 @@ class HullPart extends Part {
 }
 
 class ControlPart extends Part {
-    constructor({ powerUsage = 10, ...opts }) {
+    constructor({ powerUsage = 1, ...opts }) {
         super({
             partType: "Control",
             ...opts
@@ -110,14 +110,14 @@ class EnginePart extends Part {
 
 class ReactorPart extends Part {
     constructor({
-        powerGeneration = 5,
-        heatGeneration = 20,
-        powerStorage = 2500,
+        powerGeneration = 10,
+        heatGeneration = 10,
+        powerStorage = 1000,
         ...opts
     }) {
         super({
             partType: "Reactor",
-            density: 250,
+            density: 200,
             ...opts
         });
         this.powerGeneration = powerGeneration;

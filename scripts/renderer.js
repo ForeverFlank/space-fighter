@@ -6,8 +6,11 @@ import { GameObjects } from "./game-objects.js";
 import { getScreenPos, getScreenSize } from "./camera.js";
 import { drawShipOsculatingOrbit } from "./trajectory-drawer.js";
 import { vecAdd, vecRotate, vecSub } from "./math.js";
+import { Teams } from "./teams.js";
 
 export const shipCloseupThresold = 10;
+
+const maxVisibleProjectiles = 1000;
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -56,7 +59,7 @@ function renderScene(ctx, canvas, time) {
     renderPlanetSOIs(ctx);
     renderPlanets(ctx, time);
 
-    renderProjectiles(ctx, time);
+    renderProjectiles(ctx);
 
     renderShipOrbits(ctx, time);
     renderShips(ctx);
@@ -162,7 +165,7 @@ function drawRotatedTriangle(ctx, screenPos, size, rot) {
 
 function renderShipOrbits(ctx, time) {
     for (const ship of GameObjects.ships) {
-        const color = ship.team === "ally" ? "#0f0" : "#f00"
+        const color = Teams[ship.team];
         ctx.strokeStyle = color;
         // computeShipTrajectory(ship, time);
         // drawShipTrajectory(ctx, ship, time);
@@ -173,10 +176,10 @@ function renderShipOrbits(ctx, time) {
 function renderShips(ctx) {
     for (const ship of GameObjects.ships) {
         const screenPos = getScreenPos(ship.pos);
-        const color = ship.team === "ally" ? "#00ff00" : "#ff0000";
+        const color = Teams[ship.team];
 
         const size = Math.max(
-            10, getScreenSize(ship.mapSize)
+            10, getScreenSize(ship.size)
         );
 
         if (size > shipCloseupThresold) {
@@ -231,8 +234,15 @@ function renderShips(ctx) {
     }
 }
 
-function renderProjectiles(ctx, time) {
+function renderProjectiles(ctx) {
+    const projectileCount = GameObjects.projectiles.length;
+    const renderChance =
+        projectileCount < maxVisibleProjectiles
+        ? 1 : maxVisibleProjectiles / projectileCount;
+
     for (const proj of GameObjects.projectiles) {
+        if (Math.random() > renderChance) continue;
+
         const screenPos = getScreenPos(proj.pos);
 
         if (proj.prevScreenPos === undefined) {

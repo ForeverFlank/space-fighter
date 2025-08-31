@@ -1,6 +1,6 @@
 "use strict";
 
-import { deg2Rad, vecAdd, vecDot, vecLengthSq, vecMul, vecNormalize, vecRotate, vecSub } from "./math.js";
+import { deg2Rad, vecAdd, vecDistanceSq, vecDot, vecLengthSq, vecMul, vecNormalize, vecRotate, vecSub } from "./math.js";
 import { SolarSystem } from "./solar-system.js";
 
 function onSegment(p, q, r) {
@@ -121,10 +121,10 @@ function raycastTrapezoidPart(p0, p1, m, dir, part, hits) {
         x = rhs / lhs;
         y = topSideEq(x);
 
-        const normal = [Math.abs(slope), -1];
+        const normal = [slope, -1];
         vecNormalize(normal, normal);
 
-        damageFactor = vecDot(dir, normal);
+        damageFactor = Math.abs(vecDot(dir, normal));
         vecMul(normal, normal, -1);
         hits.push({ part, pos: [x, y], normal, damageFactor });
     }
@@ -134,10 +134,10 @@ function raycastTrapezoidPart(p0, p1, m, dir, part, hits) {
         x = rhs / lhs;
         y = bottomSideEq(x);
 
-        const normal = [Math.abs(slope), 1];
+        const normal = [slope, 1];
         vecNormalize(normal, normal);
         
-        damageFactor = vecDot(dir, normal);
+        damageFactor = Math.abs(vecDot(dir, normal));
         vecMul(normal, normal, -1);
         hits.push({ part, pos: [x, y], normal, damageFactor });
     }
@@ -220,12 +220,10 @@ class Projectile {
             }
         }
 
-        const d0 = [0, 0], d1 = [0, 0];
-        hits.sort((a, b) => {
-            vecSub(d0, p0Orig, a.pos);
-            vecSub(d1, p0Orig, b.pos);
-            return vecLengthSq(d0) - vecLengthSq(d1);
-        });
+        hits.sort((a, b) => 
+            vecDistanceSq(p0Orig, a.pos) -
+            vecDistanceSq(p0Orig, b.pos)
+        );
 
         ship.applyProjectileDamages(this, hits);
     }

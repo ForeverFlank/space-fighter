@@ -4,12 +4,18 @@ import { Timewarp } from "./main.js";
 import { GameObjects } from "./game-objects.js";
 import { InputState } from "./input.js";
 import { formatDate, toDate } from "./time.js";
-import { getScreenPos, getScreenSize } from "./camera.js";
+import { getScreenSize } from "./camera.js";
 
 // document.querySelectorAll(".toggle-btn").forEach(btn => {
 //     const color = btn.dataset.color;
 //     btn.style.setProperty("--btn-color", color);
 // });
+
+function formatNumber(num) {
+    const parts = num.toString().split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return parts.join(".");
+}
 
 function updateUI(time) {
     const currShip = GameObjects.controllingShip;
@@ -64,6 +70,25 @@ function updateUI(time) {
     let currDate = toDate(time);
     document.getElementById("time").innerText = formatDate(currDate);
     document.getElementById("time-speed").innerText = Timewarp.speed + "x";
+
+    const scaleBar = document.getElementById("scale-bar");
+    const scaleText = document.getElementById("scale-value");
+
+    let worldSize = 0.1;
+    let screenSize = 0.1;
+
+    for (let i = 0; screenSize < 100; i++) {
+        worldSize *= (i % 3 == 1) ? 2.5 : 2;
+        screenSize = getScreenSize(worldSize);
+    }
+
+    scaleBar.style.width = screenSize + "px";
+
+    if (worldSize < 1E3) {
+        scaleText.innerText = worldSize + " m";
+    } else {
+        scaleText.innerText = formatNumber(worldSize / 1E3) + " km";
+    }
 }
 
 export { updateUI }

@@ -19,10 +19,15 @@ let targetCamScale = camScale;
 let isDragging = false;
 let lastMouse = [0, 0];
 
-export var FocusTarget = {
-    type: null,
-    object: null
-};
+function setCamScale(scale) {
+    camScale = scale;
+    targetCamScale = scale;
+}
+
+export var focusTarget = null;
+export function setFocusTarget(target) {
+    focusTarget = target;
+}
 
 canvas.addEventListener("mousedown", (e) => {
     if (e.button === 2) {
@@ -75,7 +80,7 @@ canvas.addEventListener("mousedown", (e) => {
         const dist = vecLength([dx, dy]);
         if (dist < 20 && dist < closestDist) {
             closestDist = dist;
-            closest = { type: "ship", object: ship };
+            closest = ship;
         }
     }
 
@@ -88,12 +93,12 @@ canvas.addEventListener("mousedown", (e) => {
         const dist = vecLength([dx, dy]);
         if (dist < 20 && dist < closestDist) {
             closestDist = dist;
-            closest = { type: "planet", object: planet };
+            closest = planet;
         }
     }
 
     if (closest) {
-        FocusTarget = closest;
+        focusTarget = closest;
         camOffset = [0, 0];
     }
 });
@@ -119,13 +124,14 @@ function getScreenSize(size) {
 function updateCamera(time) {
     const oldCamScale = camScale;
     camScale += (targetCamScale - camScale) * zoomLerpFactor;
+    
     const zoomRatio = camScale / oldCamScale;
 
-    if (!FocusTarget.object) return;
+    if (focusTarget === null) return;
 
-    basePos = (FocusTarget.type === "planet")
-        ? SolarSystem.getPlanetPositionAtTime(FocusTarget.object, time)
-        : FocusTarget.object.pos;
+    basePos = (focusTarget.type === "planet")
+        ? SolarSystem.getPlanetPositionAtTime(focusTarget, time)
+        : focusTarget.pos;
 
     const diff = [0, 0];
     const tmp = [0, 0];
@@ -144,6 +150,6 @@ export {
     getScreenPos,
     getWorldPos,
     getScreenSize,
-    updateCamera,
-    camPos
+    setCamScale,
+    updateCamera
 };

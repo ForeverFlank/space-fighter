@@ -8,7 +8,7 @@ class Weapon extends Part {
             partType: "Weapon",
             density: 100,
             healthPerArea: 20,
-            hitChance: 0.2,
+            hitChance: 0.1,
             damageMultiplier: 0.5,
             ...opts
         });

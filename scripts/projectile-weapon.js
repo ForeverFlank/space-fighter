@@ -1,5 +1,6 @@
 "use strict";
 
+import { calculateFiringDirection } from "./ai.js";
 import { GameObjects } from "./game-objects.js";
 import { twoPi, vecAdd, vecSub, vecMulAdd, vecRotate, vecMul, vecNormalize } from "./math.js";
 import { Projectile } from "./projectile.js";
@@ -42,16 +43,21 @@ class ProjectileWeapon extends Weapon {
         this.heatGeneration = 10 * this.powerUsage * heatFactor;
     }
 
-    fire(time, ship, targetWorldPos) {
+    fire(time, ship, targetPos, targetVel) {
+        if (this.health <= 0) return;
         if (time < this.cooldown) return;
         this.cooldown = time + 1 / this.fireRate;
 
         const gunPos = [0, 0];
         vecRotate(gunPos, this.pos, ship.rot);
-        vecAdd(gunPos, ship.pos, gunPos);
+        vecAdd(gunPos, gunPos, ship.pos);
 
-        const dir = [0, 0];
-        vecSub(dir, targetWorldPos, gunPos);
+        const dir = calculateFiringDirection(
+            gunPos, ship.vel,
+            targetPos, targetVel,
+            this.projectileSpeed
+        );
+        // vecSub(dir, targetPos, gunPos);
         vecNormalize(dir, dir);
 
         const mountAngle = this.facing + ship.rot;
